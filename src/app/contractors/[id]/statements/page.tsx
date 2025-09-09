@@ -122,15 +122,14 @@ export default function ContractorStatementsPage() {
 		const cW = canvas.width || 1;
 		const cH = canvas.height || 1;
 		const imgData = canvas.toDataURL("image/png");
-		const pdf = new jsPDF("p", "mm", "a4");
+		const pdf = new jsPDF("p", "mm", "letter");
 
 		const pdfWidth = pdf.internal.pageSize.getWidth();
 		const pdfHeight = pdf.internal.pageSize.getHeight();
-		const ratio = Math.min(pdfWidth / cW, pdfHeight / cH);
-		const width = Math.max(1, cW * ratio);
-		const height = Math.max(1, cH * ratio);
-		const x = Math.max(0, (pdfWidth - width) / 2);
-		const y = Math.max(0, (pdfHeight - height) / 2);
+		const width = pdfWidth;
+		const height = pdfHeight;
+		const x = 0;
+		const y = 0;
 
 		pdf.addImage(imgData, "PNG", x, y, width, height);
 		const safeName = buildFileName(data, fallbackDate);
@@ -168,16 +167,15 @@ export default function ContractorStatementsPage() {
 
 		// Add page if not the first
 		if (!isFirstPage) {
-			pdf.addPage("a4", "p");
+			pdf.addPage("letter", "p");
 		}
 
 		const pdfWidth = pdf.internal.pageSize.getWidth();
 		const pdfHeight = pdf.internal.pageSize.getHeight();
-		const ratio = Math.min(pdfWidth / cW, pdfHeight / cH);
-		const width = Math.max(1, cW * ratio);
-		const height = Math.max(1, cH * ratio);
-		const x = Math.max(0, (pdfWidth - width) / 2);
-		const y = Math.max(0, (pdfHeight - height) / 2);
+		const width = pdfWidth;
+		const height = pdfHeight;
+		const x = 0;
+		const y = 0;
 
 		pdf.addImage(imgData, "PNG", x, y, width, height);
 
@@ -215,7 +213,7 @@ export default function ContractorStatementsPage() {
 		}
 		setBulkDownloading(true);
 		try {
-			const pdf = new jsPDF("p", "mm", "a4");
+			const pdf = new jsPDF("p", "mm", "letter");
 			let isFirst = true;
 			for (const s of list) {
 				let data: PayStatementData | null = s.data || null;

@@ -22,6 +22,10 @@ export async function POST(req: NextRequest) {
 		}
 
 		const parentFolderId = process.env.DRIVE_PARENT_FOLDER_ID;
+		const bearer = req.headers
+			.get("authorization")
+			?.replace(/^[Bb]earer\s+/, "");
+		const isOAuth = Boolean(bearer);
 		const clientEmail = process.env.GDRIVE_SERVICE_ACCOUNT_EMAIL;
 		let privateKey = process.env.GDRIVE_PRIVATE_KEY;
 		const keyFilePath = process.env.GDRIVE_KEYFILE_PATH;
@@ -33,52 +37,100 @@ export async function POST(req: NextRequest) {
 			);
 		}
 
-		if (!clientEmail || !privateKey) {
-			if (keyFilePath) {
-				try {
-					const keyJsonRaw = await fs.readFile(keyFilePath, "utf8");
-					const keyJson = JSON.parse(keyJsonRaw);
-					privateKey = keyJson.private_key;
-					// Optional: allow overriding client_email from file
-					if (!clientEmail && keyJson.client_email) {
-						// eslint-disable-next-line @typescript-eslint/no-explicit-any
-						(process.env as any).GDRIVE_SERVICE_ACCOUNT_EMAIL =
-							keyJson.client_email;
+		if (!isOAuth) {
+			if (!clientEmail || !privateKey) {
+				if (keyFilePath) {
+					try {
+						const keyJsonRaw = await fs.readFile(keyFilePath, "utf8");
+						const keyJson = JSON.parse(keyJsonRaw);
+						privateKey = keyJson.private_key;
+						// Optional: allow overriding client_email from file
+						if (!clientEmail && keyJson.client_email) {
+							// eslint-disable-next-line @typescript-eslint/no-explicit-any
+							(process.env as any).GDRIVE_SERVICE_ACCOUNT_EMAIL =
+								keyJson.client_email;
+						}
+					} catch (e) {
+						return new Response(
+							JSON.stringify({ error: `Failed to read keyfile: ${String(e)}` }),
+							{ status: 500, headers: { "Content-Type": "application/json" } }
+						);
 					}
-				} catch (e) {
+				} else {
 					return new Response(
-						JSON.stringify({ error: `Failed to read keyfile: ${String(e)}` }),
+						JSON.stringify({
+							error:
+								"Missing Drive credentials. Set GDRIVE_SERVICE_ACCOUNT_EMAIL and GDRIVE_PRIVATE_KEY, or provide GDRIVE_KEYFILE_PATH to the JSON key file.",
+						}),
 						{ status: 500, headers: { "Content-Type": "application/json" } }
 					);
 				}
-			} else {
+			}
+		}
+
+		// Handle escaped \n in env vars if present (service account only)
+		if (!isOAuth && privateKey) {
+			privateKey = privateKey.replace(/\\n/g, "\n");
+		}
+
+		// Build Drive client: OAuth (user) or Service Account
+		let drive = google.drive({
+			version: "v3",
+			auth: undefined as unknown as any,
+		});
+		if (isOAuth) {
+			const oAuth2 = new google.auth.OAuth2();
+			oAuth2.setCredentials({ access_token: bearer as string });
+			drive = google.drive({ version: "v3", auth: oAuth2 });
+		} else {
+			const auth = new google.auth.JWT({
+				email: process.env.GDRIVE_SERVICE_ACCOUNT_EMAIL as string,
+				key: privateKey as string,
+				scopes: ["https://www.googleapis.com/auth/drive"],
+			});
+			drive = google.drive({ version: "v3", auth });
+		}
+
+		// If using Service Account, verify parent folder lives in a Shared drive (otherwise no quota)
+		let resolvedDriveId: string | undefined;
+		if (!isOAuth) {
+			try {
+				const parentMeta = await drive.files.get({
+					fileId: parentFolderId,
+					fields: "id, name, driveId, teamDriveId, parents",
+					supportsAllDrives: true,
+				});
+				resolvedDriveId = (parentMeta.data.driveId ||
+					parentMeta.data.teamDriveId ||
+					undefined) as string | undefined;
+				const inSharedDrive = Boolean(resolvedDriveId);
+				if (!inSharedDrive) {
+					return new Response(
+						JSON.stringify({
+							error:
+								"Configured parent folder is not in a Shared drive. Move it into a Shared drive and add the service account as a member.",
+							folderName: parentMeta.data.name,
+							folderId: parentMeta.data.id,
+						}),
+						{ status: 400, headers: { "Content-Type": "application/json" } }
+					);
+				}
+			} catch (e) {
+				// If we cannot read the folder, return useful error
+				const msg = e instanceof Error ? e.message : String(e);
 				return new Response(
-					JSON.stringify({
-						error:
-							"Missing Drive credentials. Set GDRIVE_SERVICE_ACCOUNT_EMAIL and GDRIVE_PRIVATE_KEY, or provide GDRIVE_KEYFILE_PATH to the JSON key file.",
-					}),
-					{ status: 500, headers: { "Content-Type": "application/json" } }
+					JSON.stringify({ error: `Failed to read parent folder: ${msg}` }),
+					{ status: 400, headers: { "Content-Type": "application/json" } }
 				);
 			}
 		}
 
-		// Handle escaped \n in env vars if present
-		if (privateKey) {
-			privateKey = privateKey.replace(/\\n/g, "\n");
-		}
-
-		const auth = new google.auth.JWT({
-			email: process.env.GDRIVE_SERVICE_ACCOUNT_EMAIL as string,
-			key: privateKey as string,
-			scopes: ["https://www.googleapis.com/auth/drive"],
-		});
-
-		const drive = google.drive({ version: "v3", auth });
-
 		// 1) Find or create subfolder under parent matching contractorName
 		const supportsAllDrives = true;
 		const includeItemsFromAllDrives = true;
-		const corpora = "allDrives"; // search user + shared drives
+		const driveId = process.env.DRIVE_DRIVE_ID || resolvedDriveId;
+		// If a specific Shared Drive ID is provided, restrict search to that drive for speed; otherwise search across all drives
+		const corpora = driveId ? "drive" : "allDrives";
 
 		const folderQuery = [
 			`'${parentFolderId}' in parents`,
@@ -94,6 +146,7 @@ export async function POST(req: NextRequest) {
 			supportsAllDrives,
 			corpora,
 			pageSize: 10,
+			...(driveId ? { driveId } : {}),
 		});
 
 		let targetFolderId: string | undefined =

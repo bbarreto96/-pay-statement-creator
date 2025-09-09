@@ -8,6 +8,7 @@ import PayStatement from "./PayStatement";
 import { PayStatementData } from "@/types/payStatement";
 import { getPayPeriodById } from "../utils/payPeriods";
 import SaveStatementButton from "./SaveStatementButton";
+import UploadToDriveButton from "./UploadToDriveButton";
 
 interface PDFGeneratorProps {
 	data: PayStatementData;
@@ -78,6 +79,10 @@ const PDFGenerator: React.FC<PDFGeneratorProps> = ({ data }) => {
 							size: A4;
 							margin: 0.5in;
 						}
+							@page {
+								size: Letter;
+								margin: 0;
+							}
 
 						* {
 							margin: 0;
@@ -172,36 +177,31 @@ const PDFGenerator: React.FC<PDFGeneratorProps> = ({ data }) => {
 			console.log("Starting fallback PDF generation...");
 
 			// Simple html2canvas approach
+			// Force capture at exact Letter @ 96dpi (816x1056 px) to match CSS inches
+			const targetW = Math.round(8.5 * 96);
+			const targetH = Math.round(11 * 96);
 			const canvas = await html2canvas(componentRef.current, {
-				scale: 1,
+				width: targetW,
+				height: targetH,
+				windowWidth: targetW,
+				windowHeight: targetH,
+				scale: Math.min(3, Math.max(2, window.devicePixelRatio || 1)),
 				useCORS: true,
 				backgroundColor: "#ffffff",
 				logging: false,
 			});
 
 			const imgData = canvas.toDataURL("image/png");
-			const pdf = new jsPDF("p", "mm", "a4");
+			const pdf = new jsPDF({ orientation: "p", unit: "pt", format: "letter" });
 
 			const pdfWidth = pdf.internal.pageSize.getWidth();
 			const pdfHeight = pdf.internal.pageSize.getHeight();
 
-			// Simple fit-to-page calculation
-			const imgAspectRatio = canvas.height / canvas.width;
-			const pdfAspectRatio = pdfHeight / pdfWidth;
-
-			let width, height;
-			if (imgAspectRatio > pdfAspectRatio) {
-				height = pdfHeight - 20;
-				width = height / imgAspectRatio;
-			} else {
-				width = pdfWidth - 20;
-				height = width * imgAspectRatio;
-			}
-
-			const x = (pdfWidth - width) / 2;
-			const y = (pdfHeight - height) / 2;
-
-			pdf.addImage(imgData, "PNG", x, y, width, height);
+			// Map CSS px to PDF points (72 dpi) so inches match exactly: 1in CSS (96px) = 72pt
+			const pxToPt = (px: number) => (px * 72) / 96;
+			const width = pxToPt(targetW);
+			const height = pxToPt(targetH);
+			pdf.addImage(imgData, "PNG", 0, 0, width, height);
 
 			const periodLabelCanvas =
 				getPayPeriodById(data.payment.payPeriodId)?.label || "Pay Period";
@@ -239,6 +239,7 @@ const PDFGenerator: React.FC<PDFGeneratorProps> = ({ data }) => {
 				</button>
 				{/* Save Statement button added; Zapier/Drive removed */}
 				<SaveStatementButton data={data} />
+				<UploadToDriveButton data={data} targetRef={componentRef} />
 			</div>
 
 			{/* Pay Statement Component */}

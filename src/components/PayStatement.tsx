@@ -326,6 +326,9 @@ const PayStatement: React.FC<PayStatementProps> = ({ data }) => {
 								})}
 							</td>
 						</tr>
+						<tr>
+							<td colSpan={3} style={{ padding: "6px 0" }} />
+						</tr>
 					</tbody>
 				</table>
 			</div>
