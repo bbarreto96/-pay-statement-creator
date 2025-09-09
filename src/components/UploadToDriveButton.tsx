@@ -6,6 +6,24 @@ import jsPDF from "jspdf";
 import { PayStatementData } from "@/types/payStatement";
 import { getPayPeriodById } from "@/utils/payPeriods";
 
+type GisTokenResponse = { access_token?: string };
+type GisTokenClient = { requestAccessToken: () => void };
+type GoogleOauth2 = {
+	initTokenClient: (params: {
+		client_id: string;
+		scope: string;
+		prompt?: string;
+		callback: (response: GisTokenResponse) => void;
+	}) => GisTokenClient;
+};
+type GoogleAccounts = { oauth2: GoogleOauth2 };
+type GoogleGlobal = { accounts: GoogleAccounts };
+declare global {
+	interface Window {
+		google?: GoogleGlobal;
+	}
+}
+
 type DivRef =
 	| React.RefObject<HTMLDivElement | null>
 	| React.MutableRefObject<HTMLDivElement | null>;
@@ -24,7 +42,7 @@ const UploadToDriveButton: React.FC<Props> = ({ data, targetRef }) => {
 	const getClientId = () => process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
 	const ensureGisLoaded = async () => {
 		if (typeof window === "undefined") return;
-		if ((window as any).google?.accounts?.oauth2) return;
+		if (window.google?.accounts?.oauth2) return;
 		await new Promise<void>((resolve, reject) => {
 			const s = document.createElement("script");
 			s.src = "https://accounts.google.com/gsi/client";
@@ -46,13 +64,11 @@ const UploadToDriveButton: React.FC<Props> = ({ data, targetRef }) => {
 		if (accessToken) return accessToken;
 		return await new Promise<string>((resolve, reject) => {
 			try {
-				const tokenClient = (
-					window as any
-				).google.accounts.oauth2.initTokenClient({
+				const tokenClient = window.google!.accounts.oauth2.initTokenClient({
 					client_id: clientId,
 					scope: "https://www.googleapis.com/auth/drive.file",
 					prompt: "consent",
-					callback: (resp: any) => {
+					callback: (resp: GisTokenResponse) => {
 						if (resp?.access_token) {
 							setAccessToken(resp.access_token);
 							resolve(resp.access_token);

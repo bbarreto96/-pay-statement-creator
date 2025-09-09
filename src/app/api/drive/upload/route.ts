@@ -1,4 +1,4 @@
-import { google } from "googleapis";
+import { google, drive_v3 } from "googleapis";
 import { NextRequest } from "next/server";
 import fs from "node:fs/promises";
 
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
 			.get("authorization")
 			?.replace(/^[Bb]earer\s+/, "");
 		const isOAuth = Boolean(bearer);
-		const clientEmail = process.env.GDRIVE_SERVICE_ACCOUNT_EMAIL;
+		let serviceAccountEmail = process.env.GDRIVE_SERVICE_ACCOUNT_EMAIL;
 		let privateKey = process.env.GDRIVE_PRIVATE_KEY;
 		const keyFilePath = process.env.GDRIVE_KEYFILE_PATH;
 
@@ -38,17 +38,15 @@ export async function POST(req: NextRequest) {
 		}
 
 		if (!isOAuth) {
-			if (!clientEmail || !privateKey) {
+			if (!serviceAccountEmail || !privateKey) {
 				if (keyFilePath) {
 					try {
 						const keyJsonRaw = await fs.readFile(keyFilePath, "utf8");
 						const keyJson = JSON.parse(keyJsonRaw);
 						privateKey = keyJson.private_key;
 						// Optional: allow overriding client_email from file
-						if (!clientEmail && keyJson.client_email) {
-							// eslint-disable-next-line @typescript-eslint/no-explicit-any
-							(process.env as any).GDRIVE_SERVICE_ACCOUNT_EMAIL =
-								keyJson.client_email;
+						if (!serviceAccountEmail && keyJson.client_email) {
+							serviceAccountEmail = keyJson.client_email as string;
 						}
 					} catch (e) {
 						return new Response(
@@ -74,17 +72,14 @@ export async function POST(req: NextRequest) {
 		}
 
 		// Build Drive client: OAuth (user) or Service Account
-		let drive = google.drive({
-			version: "v3",
-			auth: undefined as unknown as any,
-		});
+		let drive: drive_v3.Drive;
 		if (isOAuth) {
 			const oAuth2 = new google.auth.OAuth2();
 			oAuth2.setCredentials({ access_token: bearer as string });
 			drive = google.drive({ version: "v3", auth: oAuth2 });
 		} else {
 			const auth = new google.auth.JWT({
-				email: process.env.GDRIVE_SERVICE_ACCOUNT_EMAIL as string,
+				email: serviceAccountEmail as string,
 				key: privateKey as string,
 				scopes: ["https://www.googleapis.com/auth/drive"],
 			});
