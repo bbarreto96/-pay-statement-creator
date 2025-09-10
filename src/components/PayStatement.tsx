@@ -241,7 +241,7 @@ const PayStatement: React.FC<PayStatementProps> = ({ data }) => {
 					}}
 				>
 					<tbody>
-						{data.paymentDetails.map((detail, index) => (
+						{(data.summary || []).map((item, index) => (
 							<tr key={index}>
 								<td
 									style={{
@@ -252,7 +252,7 @@ const PayStatement: React.FC<PayStatementProps> = ({ data }) => {
 										width: "70%",
 									}}
 								>
-									{detail.description}
+									{(item.description || "").replace(/\s*\(hourly\)$/i, "")}
 								</td>
 								<td
 									style={{
@@ -275,7 +275,7 @@ const PayStatement: React.FC<PayStatementProps> = ({ data }) => {
 										width: "20%",
 									}}
 								>
-									{detail.amount.toLocaleString("en-US", {
+									{item.total.toLocaleString("en-US", {
 										style: "currency",
 										currency: "USD",
 										minimumFractionDigits: 2,
@@ -319,11 +319,13 @@ const PayStatement: React.FC<PayStatementProps> = ({ data }) => {
 									width: "20%",
 								}}
 							>
-								{data.totalPayment.toLocaleString("en-US", {
-									style: "currency",
-									currency: "USD",
-									minimumFractionDigits: 2,
-								})}
+								{(data.summary || [])
+									.reduce((sum, item) => sum + (item.total || 0), 0)
+									.toLocaleString("en-US", {
+										style: "currency",
+										currency: "USD",
+										minimumFractionDigits: 2,
+									})}
 							</td>
 						</tr>
 						<tr>
