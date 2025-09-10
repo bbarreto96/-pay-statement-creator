@@ -40,7 +40,7 @@ const PayStatement: React.FC<PayStatementProps> = ({ data }) => {
 				<div
 					style={{
 						display: "inline-flex",
-						alignItems: "baseline",
+						alignItems: "center",
 						gap: "12px",
 					}}
 				>
