@@ -50,7 +50,7 @@ const PayStatement: React.FC<PayStatementProps> = ({ data }) => {
 						style={{
 							height: "48px",
 							width: "auto",
-							transform: "translateY(1px)",
+							transform: "translateY(0px)",
 							display: "block",
 						}}
 					/>
