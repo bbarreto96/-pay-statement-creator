@@ -101,13 +101,13 @@ const UploadToDriveButton: React.FC<Props> = ({ data, targetRef }) => {
 			height: targetH,
 			windowWidth: targetW,
 			windowHeight: targetH,
-			scale: Math.min(3, Math.max(2, window.devicePixelRatio || 1)),
+			scale: 2, // force scale to keep PDF small enough for serverless limits
 			useCORS: true,
 			backgroundColor: "#ffffff",
 			logging: false,
 		});
 
-		const imgData = canvas.toDataURL("image/png");
+		const imgData = canvas.toDataURL("image/jpeg", 0.85);
 		const pdf = new jsPDF({ orientation: "p", unit: "pt", format: "letter" });
 
 		const pdfWidth = pdf.internal.pageSize.getWidth();
@@ -116,7 +116,7 @@ const UploadToDriveButton: React.FC<Props> = ({ data, targetRef }) => {
 		const pxToPt = (px: number) => (px * 72) / 96;
 		const width = pxToPt(targetW);
 		const height = pxToPt(targetH);
-		pdf.addImage(imgData, "PNG", 0, 0, width, height);
+		pdf.addImage(imgData, "JPEG", 0, 0, width, height);
 
 		const periodLabel =
 			getPayPeriodById(data.payment.payPeriodId || "")?.label ||
