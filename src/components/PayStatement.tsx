@@ -7,7 +7,19 @@ interface PayStatementProps {
 	data: PayStatementData;
 }
 
-const PayStatement: React.FC<PayStatementProps> = ({ data }) => {
+const PayStatement: React.FC<PayStatementProps> = ({
+	data,
+	preset = "current",
+}) => {
+	const isBP = preset === "bpv1";
+	const sortedSummary = isBP
+		? [...(data.summary || [])].sort((a, b) =>
+				(a.description || "").localeCompare(b.description || "", undefined, {
+					sensitivity: "base",
+				})
+		  )
+		: data.summary || [];
+
 	return (
 		<div
 			className="mx-auto bg-white print:shadow-none"
@@ -175,165 +187,322 @@ const PayStatement: React.FC<PayStatementProps> = ({ data }) => {
 			</div>
 
 			{/* Payment Details Table */}
-			<div style={{ marginBottom: "24px" }}>
-				<h3
-					style={{
-						fontSize: "10px",
-						fontWeight: 600,
-						color: "#474D53",
-						margin: 0,
-						marginBottom: "4px",
-						textAlign: "left",
-					}}
-				>
-					Payment Details
-				</h3>
-				{/* Thin horizontal teal line */}
-				<div
-					style={{
-						width: "100%",
-						height: "1px",
-						backgroundColor: "#A8D5A6",
-						marginBottom: "2px",
-					}}
-				></div>
-				{/* Header labels positioned manually */}
-				<div
-					style={{
-						display: "flex",
-						width: "100%",
-						marginBottom: "8px",
-					}}
-				>
-					<div
+			{!isBP && (
+				<div style={{ marginBottom: "24px" }}>
+					<h3
 						style={{
-							width: "70%",
 							fontSize: "10px",
 							fontWeight: 600,
+							color: "#474D53",
+							margin: 0,
+							marginBottom: "4px",
 							textAlign: "left",
-							color: "#474D53",
 						}}
 					>
-						Description
-					</div>
-					<div style={{ width: "10%" }}></div>
+						{isBP ? "Summary by Building" : "Payment Details"}
+					</h3>
+					{/* Thin horizontal teal line */}
 					<div
 						style={{
-							width: "20%",
-							fontSize: "10px",
-							fontWeight: 600,
-							textAlign: "right",
-							color: "#474D53",
+							width: "100%",
+							height: "1px",
+							backgroundColor: "#A8D5A6",
+							marginBottom: "2px",
 						}}
-					>
-						Total
-					</div>
-				</div>
-				<table
-					style={{
-						width: "100%",
-						borderCollapse: "collapse",
-						border: "none",
-						borderBottom: "0.5px solid #A8D5A6",
-						borderSpacing: "0",
-						margin: "0",
-						padding: "0",
-					}}
-				>
-					<tbody>
-						{(data.summary || []).map((item, index) => (
-							<tr key={index}>
-								<td
-									style={{
-										fontSize: "10px",
-										fontWeight: 400,
-										padding: "6px 0",
-										border: "none",
-										width: "70%",
-									}}
-								>
-									{(item.description || "").replace(/\s*\(hourly\)$/i, "")}
-								</td>
-								<td
-									style={{
-										fontSize: "10px",
-										fontWeight: 400,
-										padding: "6px 0",
-										border: "none",
-										width: "10%",
-									}}
-								>
-									{/* Blank spacer */}
-								</td>
-								<td
-									style={{
-										fontSize: "10px",
-										fontWeight: 400,
-										textAlign: "right",
-										padding: "6px 0",
-										border: "none",
-										width: "20%",
-									}}
-								>
-									{item.total.toLocaleString("en-US", {
-										style: "currency",
-										currency: "USD",
-										minimumFractionDigits: 2,
-									})}
-								</td>
-							</tr>
-						))}
-						<tr>
-							<td
+					></div>
+					{/* Header labels positioned manually */}
+					{isBP ? (
+						<div
+							style={{
+								display: "flex",
+								width: "100%",
+								marginBottom: "8px",
+							}}
+						>
+							<div
 								style={{
+									width: "40%",
 									fontSize: "10px",
-									fontWeight: 400,
-									padding: "6px 0 3px 0",
-									border: "none",
-									lineHeight: "10px",
-									width: "70%",
+									fontWeight: 600,
+									textAlign: "left",
+									color: "#474D53",
 								}}
 							>
-								Total Payment
-							</td>
-							<td
+								Building
+							</div>
+							<div
 								style={{
+									width: "20%",
 									fontSize: "10px",
-									fontWeight: 400,
-									padding: "6px 0 3px 0",
-									border: "none",
-									lineHeight: "10px",
-									width: "10%",
+									fontWeight: 600,
+									textAlign: "center",
+									color: "#474D53",
 								}}
 							>
-								{/* Blank spacer */}
-							</td>
-							<td
+								Qty
+							</div>
+							<div
 								style={{
+									width: "20%",
+									fontSize: "10px",
+									fontWeight: 600,
+									textAlign: "center",
+									color: "#474D53",
+								}}
+							>
+								Rate
+							</div>
+							<div
+								style={{
+									width: "20%",
 									fontSize: "10px",
 									fontWeight: 600,
 									textAlign: "right",
-									padding: "6px 0 3px 0",
-									border: "none",
-									lineHeight: "10px",
-									width: "20%",
+									color: "#474D53",
 								}}
 							>
-								{(data.summary || [])
-									.reduce((sum, item) => sum + (item.total || 0), 0)
-									.toLocaleString("en-US", {
-										style: "currency",
-										currency: "USD",
-										minimumFractionDigits: 2,
-									})}
-							</td>
-						</tr>
-						<tr>
-							<td colSpan={3} style={{ padding: "6px 0" }} />
-						</tr>
-					</tbody>
-				</table>
-			</div>
+								Amount
+							</div>
+						</div>
+					) : (
+						<div
+							style={{
+								display: "flex",
+								width: "100%",
+								marginBottom: "8px",
+							}}
+						>
+							<div
+								style={{
+									width: "70%",
+									fontSize: "10px",
+									fontWeight: 600,
+									textAlign: "left",
+									color: "#474D53",
+								}}
+							>
+								Description
+							</div>
+							<div style={{ width: "10%" }}></div>
+							<div
+								style={{
+									width: "20%",
+									fontSize: "10px",
+									fontWeight: 600,
+									textAlign: "right",
+									color: "#474D53",
+								}}
+							>
+								Total
+							</div>
+						</div>
+					)}
+					<table
+						style={{
+							width: "100%",
+							borderCollapse: "collapse",
+							border: "none",
+							borderBottom: "0.5px solid #A8D5A6",
+							borderSpacing: "0",
+							margin: "0",
+							padding: "0",
+						}}
+					>
+						<tbody>
+							{sortedSummary.map((item, index) =>
+								isBP ? (
+									<tr key={index}>
+										<td
+											style={{
+												fontSize: "10px",
+												fontWeight: 400,
+												padding: "6px 0",
+												border: "none",
+												width: "40%",
+											}}
+										>
+											{(item.description || "").replace(/\s*\(hourly\)$/i, "")}
+										</td>
+										<td
+											style={{
+												fontSize: "10px",
+												fontWeight: 400,
+												textAlign: "center",
+												padding: "6px 0",
+												border: "none",
+												width: "20%",
+											}}
+										>
+											{item.numberOfVisits}
+											{item.qtySuffix ? ` ${item.qtySuffix}` : " units"}
+										</td>
+										<td
+											style={{
+												fontSize: "10px",
+												fontWeight: 400,
+												textAlign: "center",
+												padding: "6px 0",
+												border: "none",
+												width: "20%",
+											}}
+										>
+											{item.payPerVisit.toLocaleString("en-US", {
+												style: "currency",
+												currency: "USD",
+												minimumFractionDigits: 2,
+											})}
+											{item.qtySuffix === "hrs" ? " / hr" : " / unit"}
+										</td>
+										<td
+											style={{
+												fontSize: "10px",
+												fontWeight: 400,
+												textAlign: "right",
+												padding: "6px 0",
+												border: "none",
+												width: "20%",
+											}}
+										>
+											{item.total.toLocaleString("en-US", {
+												style: "currency",
+												currency: "USD",
+												minimumFractionDigits: 2,
+											})}
+										</td>
+									</tr>
+								) : (
+									<tr key={index}>
+										<td
+											style={{
+												fontSize: "10px",
+												fontWeight: 400,
+												padding: "6px 0",
+												border: "none",
+												width: "70%",
+											}}
+										>
+											{(item.description || "").replace(/\s*\(hourly\)$/i, "")}
+										</td>
+										<td
+											style={{
+												fontSize: "10px",
+												fontWeight: 400,
+												padding: "6px 0",
+												border: "none",
+												width: "10%",
+											}}
+										>
+											{/* Blank spacer */}
+										</td>
+										<td
+											style={{
+												fontSize: "10px",
+												fontWeight: 400,
+												textAlign: "right",
+												padding: "6px 0",
+												border: "none",
+												width: "20%",
+											}}
+										>
+											{item.total.toLocaleString("en-US", {
+												style: "currency",
+												currency: "USD",
+												minimumFractionDigits: 2,
+											})}
+										</td>
+									</tr>
+								)
+							)}
+							{isBP ? (
+								<tr>
+									<td
+										style={{
+											fontSize: "10px",
+											fontWeight: 600,
+											padding: "6px 0 3px 0",
+											border: "none",
+											lineHeight: "10px",
+											width: "40%",
+										}}
+									>
+										Total
+									</td>
+									<td style={{ width: "20%" }} />
+									<td style={{ width: "20%" }} />
+									<td
+										style={{
+											fontSize: "10px",
+											fontWeight: 600,
+											textAlign: "right",
+											padding: "6px 0 3px 0",
+											border: "none",
+											lineHeight: "10px",
+											width: "20%",
+										}}
+									>
+										{(data.summary || [])
+											.reduce((sum, item) => sum + (item.total || 0), 0)
+											.toLocaleString("en-US", {
+												style: "currency",
+												currency: "USD",
+												minimumFractionDigits: 2,
+											})}
+									</td>
+								</tr>
+							) : (
+								<tr>
+									<td
+										style={{
+											fontSize: "10px",
+											fontWeight: 400,
+											padding: "6px 0 3px 0",
+											border: "none",
+											lineHeight: "10px",
+											width: "70%",
+										}}
+									>
+										Total Payment
+									</td>
+									<td
+										style={{
+											fontSize: "10px",
+											fontWeight: 400,
+											padding: "6px 0 3px 0",
+											border: "none",
+											lineHeight: "10px",
+											width: "10%",
+										}}
+									>
+										{/* Blank spacer */}
+									</td>
+									<td
+										style={{
+											fontSize: "10px",
+											fontWeight: 600,
+											textAlign: "right",
+											padding: "6px 0 3px 0",
+											border: "none",
+											lineHeight: "10px",
+											width: "20%",
+										}}
+									>
+										{(data.summary || [])
+											.reduce((sum, item) => sum + (item.total || 0), 0)
+											.toLocaleString("en-US", {
+												style: "currency",
+												currency: "USD",
+												minimumFractionDigits: 2,
+											})}
+									</td>
+								</tr>
+							)}
+							<tr>
+								<td colSpan={isBP ? 4 : 3} style={{ padding: "6px 0" }} />
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			)}
 
 			{/* Summary Table */}
 			<div>
@@ -347,7 +516,7 @@ const PayStatement: React.FC<PayStatementProps> = ({ data }) => {
 						textAlign: "left",
 					}}
 				>
-					Summary
+					{isBP ? "Itemized Details" : "Summary"}
 				</h3>
 				{/* Thin horizontal teal line */}
 				<div
@@ -391,7 +560,7 @@ const PayStatement: React.FC<PayStatementProps> = ({ data }) => {
 							paddingRight: "8px",
 						}}
 					>
-						Pay Per Visit
+						{isBP ? "Rate" : "Pay Per Visit"}
 					</div>
 					<div
 						style={{
@@ -455,7 +624,7 @@ const PayStatement: React.FC<PayStatementProps> = ({ data }) => {
 					}}
 				>
 					<tbody>
-						{data.summary.map((item, index) => (
+						{sortedSummary.map((item, index) => (
 							<tr key={index}>
 								<td
 									style={{
@@ -485,6 +654,7 @@ const PayStatement: React.FC<PayStatementProps> = ({ data }) => {
 										currency: "USD",
 										minimumFractionDigits: 2,
 									})}
+									{isBP ? (item.qtySuffix === "hrs" ? " / hr" : " / unit") : ""}
 								</td>
 								<td
 									style={{
@@ -498,7 +668,7 @@ const PayStatement: React.FC<PayStatementProps> = ({ data }) => {
 									}}
 								>
 									{item.numberOfVisits}
-									{item.qtySuffix ? ` ${item.qtySuffix}` : ""}
+									{item.qtySuffix ? ` ${item.qtySuffix}` : " units"}
 								</td>
 								<td
 									style={{

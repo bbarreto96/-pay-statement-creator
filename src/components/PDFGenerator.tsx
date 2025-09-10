@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
@@ -15,6 +15,7 @@ interface PDFGeneratorProps {
 }
 
 const PDFGenerator: React.FC<PDFGeneratorProps> = ({ data }) => {
+	const [preset, setPreset] = useState<"current" | "bpv1">("bpv1");
 	const componentRef = useRef<HTMLDivElement>(null);
 
 	// Print functionality using react-to-print
@@ -224,7 +225,7 @@ const PDFGenerator: React.FC<PDFGeneratorProps> = ({ data }) => {
 	return (
 		<div className="space-y-4">
 			{/* Action Buttons */}
-			<div className="flex gap-4 justify-center print:hidden flex-wrap">
+			<div className="flex gap-4 justify-center print:hidden flex-wrap items-center">
 				<button
 					onClick={generatePDF}
 					className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
@@ -240,11 +241,22 @@ const PDFGenerator: React.FC<PDFGeneratorProps> = ({ data }) => {
 				{/* Save Statement button added; Zapier/Drive removed */}
 				<SaveStatementButton data={data} />
 				<UploadToDriveButton data={data} targetRef={componentRef} />
+				<div className="flex items-center gap-2">
+					<label className="text-sm text-gray-700">Layout</label>
+					<select
+						value={preset}
+						onChange={(e) => setPreset(e.target.value as "current" | "bpv1")}
+						className="px-3 py-2 border rounded-md text-sm"
+					>
+						<option value="bpv1">Best Practices</option>
+						<option value="current">Current</option>
+					</select>
+				</div>
 			</div>
 
 			{/* Pay Statement Component */}
 			<div ref={componentRef}>
-				<PayStatement data={data} />
+				<PayStatement data={data} preset={preset} />
 			</div>
 		</div>
 	);

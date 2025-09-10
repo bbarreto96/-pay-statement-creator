@@ -384,7 +384,7 @@ export default function ContractorStatementsPage() {
 					width: "8.5in",
 				}}
 			>
-				{hiddenData && <PayStatement data={hiddenData} />}
+				{hiddenData && <PayStatement data={hiddenData} preset="bpv1" />}
 			</div>
 		</div>
 	);
