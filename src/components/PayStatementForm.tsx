@@ -78,7 +78,8 @@ const PayStatementForm: React.FC<PayStatementFormProps> = ({
 			const qty = Number(m.get("qty") || 1);
 			return {
 				payType: type === "hourly" ? "hourly" : "perVisit",
-				qty: isFinite(qty) && qty > 0 ? qty : 1,
+				// Allow zero quantity explicitly entered by the user; default to 1 only when invalid
+				qty: isFinite(qty) && qty >= 0 ? qty : 1,
 			};
 		} catch {
 			return { payType: "perVisit", qty: 1 };
@@ -93,13 +94,14 @@ const PayStatementForm: React.FC<PayStatementFormProps> = ({
 
 	// Helper: derive Summary and total from Payment Details (single source of truth)
 	const filterAndDerive = (details: PaymentDetail[]) => {
+		// Include both positive and negative amounts; exclude only zero-amount or empty description lines
 		const filtered = (details || []).filter(
-			(d) => (d.description?.trim()?.length || 0) > 0 && (d.amount || 0) > 0
+			(d) => (d.description?.trim()?.length || 0) > 0 && (d.amount ?? 0) !== 0
 		);
 		const summary: SummaryItem[] = filtered.map((d) => {
 			const meta = parseMeta(d.notes);
 			const rate = d.amount || 0;
-			const qty = meta.qty || 1;
+			const qty = meta.qty ?? 1;
 			const isHourly = meta.payType === "hourly";
 			return {
 				description: isHourly
@@ -350,7 +352,7 @@ const PayStatementForm: React.FC<PayStatementFormProps> = ({
 							Pay Period
 						</label>
 						<select
-							value={externalPayPeriodId || formData.payment.payPeriodId}
+							value={formData.payment.payPeriodId}
 							onChange={(e) =>
 								updateFormData({
 									payment: { ...formData.payment, payPeriodId: e.target.value },
@@ -456,9 +458,9 @@ const PayStatementForm: React.FC<PayStatementFormProps> = ({
 				{formData.paymentDetails.map((detail, index) => (
 					<div
 						key={index}
-						className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 p-4 border border-gray-200 rounded-md"
+						className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-4 p-4 border border-gray-200 rounded-md"
 					>
-						<div className="md:col-span-2">
+						<div className="md:col-span-3">
 							<label className="block text-sm font-medium text-gray-700 mb-1">
 								Description
 							</label>
@@ -472,87 +474,83 @@ const PayStatementForm: React.FC<PayStatementFormProps> = ({
 								style={{ color: "#000000" }}
 							/>
 						</div>
-						<div className="flex gap-2">
-							<div className="flex-1">
-								<label className="block text-sm font-medium text-gray-700 mb-1">
-									Amount
-								</label>
-								<input
-									type="number"
-									step="0.01"
-									value={detail.amount}
-									onChange={(e) =>
-										updatePaymentDetail(
-											index,
-											"amount",
-											parseFloat(e.target.value) || 0
-										)
-									}
-									className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-									style={{ color: "#000000" }}
-								/>
-							</div>
-							<div className="flex-1">
-								<label className="block text-sm font-medium text-gray-700 mb-1">
-									Pay Type
-								</label>
-								<select
-									value={
-										(detail.notes && parseMeta(detail.notes).payType) ||
-										"perVisit"
-									}
-									onChange={(e) => {
-										const meta = parseMeta(detail.notes);
-										updatePaymentDetail(
-											index,
-											"notes",
-											serializeMeta({
-												...meta,
-												payType: e.target.value as "perVisit" | "hourly",
-											})
-										);
-									}}
-									className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-									style={{ color: "#000000" }}
-								>
-									<option value="perVisit">Pay Per Visit</option>
-									<option value="hourly">Hourly</option>
-								</select>
-							</div>
-							<div className="flex-1">
-								<label className="block text-sm font-medium text-gray-700 mb-1">
-									{(detail.notes && parseMeta(detail.notes).payType) ===
-									"hourly"
-										? "Hours"
-										: "Quantity"}
-								</label>
-								<input
-									type="number"
-									min={0}
-									step={0.25}
-									value={(detail.notes && parseMeta(detail.notes).qty) || 1}
-									onChange={(e) => {
-										const meta = parseMeta(detail.notes);
-										const qty = parseFloat(e.target.value) || 0;
-										updatePaymentDetail(
-											index,
-											"notes",
-											serializeMeta({ ...meta, qty })
-										);
-									}}
-									className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-									style={{ color: "#000000" }}
-								/>
-							</div>
-
-							<div className="flex items-end">
-								<button
-									onClick={() => removePaymentDetail(index)}
-									className="px-3 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
-								>
-									Remove
-								</button>
-							</div>
+						<div>
+							<label className="block text-sm font-medium text-gray-700 mb-1">
+								Amount
+							</label>
+							<input
+								type="number"
+								step="0.01"
+								value={detail.amount}
+								onChange={(e) =>
+									updatePaymentDetail(
+										index,
+										"amount",
+										parseFloat(e.target.value) || 0
+									)
+								}
+								className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+								style={{ color: "#000000" }}
+							/>
+						</div>
+						<div>
+							<label className="block text-sm font-medium text-gray-700 mb-1">
+								Pay Type
+							</label>
+							<select
+								value={
+									(detail.notes && parseMeta(detail.notes).payType) ||
+									"perVisit"
+								}
+								onChange={(e) => {
+									const meta = parseMeta(detail.notes);
+									updatePaymentDetail(
+										index,
+										"notes",
+										serializeMeta({
+											...meta,
+											payType: e.target.value as "perVisit" | "hourly",
+										})
+									);
+								}}
+								className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+								style={{ color: "#000000" }}
+							>
+								<option value="perVisit">Pay Per Visit</option>
+								<option value="hourly">Hourly</option>
+							</select>
+						</div>
+						<div>
+							<label className="block text-sm font-medium text-gray-700 mb-1">
+								{(detail.notes && parseMeta(detail.notes).payType) === "hourly"
+									? "Hours"
+									: "Quantity"}
+							</label>
+							<input
+								type="number"
+								min={0}
+								step={0.25}
+								value={detail.notes ? parseMeta(detail.notes).qty : 1}
+								onChange={(e) => {
+									const meta = parseMeta(detail.notes);
+									const qty = parseFloat(e.target.value) || 0;
+									updatePaymentDetail(
+										index,
+										"notes",
+										serializeMeta({ ...meta, qty })
+									);
+								}}
+								className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+								style={{ color: "#000000" }}
+							/>
+						</div>
+						<div className="flex items-end">
+							<button
+								onClick={() => removePaymentDetail(index)}
+								className="px-3 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
+							>
+								Remove
+							</button>
 						</div>
 					</div>
 				))}

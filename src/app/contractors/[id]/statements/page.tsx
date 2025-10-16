@@ -9,6 +9,7 @@ import {
 } from "@/lib/data/payStatements";
 import PDFGenerator from "@/components/PDFGenerator";
 import PayStatement from "@/components/PayStatement";
+import TopBar from "@/components/TopBar";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { getPayPeriodById } from "@/utils/payPeriods";
@@ -247,145 +248,150 @@ export default function ContractorStatementsPage() {
 	};
 
 	return (
-		<div className="container mx-auto p-6">
-			<div className="flex items-center justify-between mb-4">
-				<h1 className="text-xl font-semibold">
-					Pay Statements for {contractorName}
-				</h1>
-				<button
-					onClick={() => router.push("/")}
-					className="px-3 py-2 bg-gray-200 rounded"
-				>
-					Home
-				</button>
-			</div>
+		<>
+			<TopBar />
+			<div className="container mx-auto p-6">
+				<div className="flex items-center justify-between mb-4">
+					<h1 className="text-xl font-semibold">
+						Pay Statements for {contractorName}
+					</h1>
+					<button
+						onClick={() => router.push("/")}
+						className="px-3 py-2 bg-gray-200 rounded"
+					>
+						Home
+					</button>
+				</div>
 
-			<div className="mb-4 space-y-3">
-				<input
-					value={q}
-					onChange={(e) => setQ(e.target.value)}
-					placeholder="Search by name or date..."
-					className="w-full px-3 py-2 border rounded"
-				/>
+				<div className="mb-4 space-y-3">
+					<input
+						value={q}
+						onChange={(e) => setQ(e.target.value)}
+						placeholder="Search by name or date..."
+						className="w-full px-3 py-2 border rounded"
+					/>
 
-				<div className="grid grid-cols-1 md:grid-cols-4 gap-2 items-end">
-					<div>
-						<label className="block text-sm text-gray-700 mb-1">
-							From date (optional)
-						</label>
-						<input
-							type="date"
-							value={fromDate}
-							onChange={(e) => setFromDate(e.target.value)}
-							className="w-full px-3 py-2 border rounded"
-						/>
-					</div>
-					<div>
-						<label className="block text-sm text-gray-700 mb-1">
-							To date (optional)
-						</label>
-						<input
-							type="date"
-							value={toDate}
-							onChange={(e) => setToDate(e.target.value)}
-							className="w-full px-3 py-2 border rounded"
-						/>
-					</div>
-					<div className="md:col-span-2 flex gap-2 mt-2 md:mt-0">
-						<button
-							onClick={handleBulkDownload}
-							disabled={bulkDownloading}
-							className={`px-4 py-2 rounded text-white ${
-								bulkDownloading
-									? "bg-gray-400 cursor-not-allowed"
-									: "bg-blue-600 hover:bg-blue-700"
-							}`}
-						>
-							{bulkDownloading ? "Downloading..." : "Download All (date range)"}
-						</button>
-						{(fromDate || toDate) && (
-							<div className="text-sm text-gray-600 flex items-center">
-								{itemsInDateRange.length} in range
-							</div>
-						)}
+					<div className="grid grid-cols-1 md:grid-cols-4 gap-2 items-end">
+						<div>
+							<label className="block text-sm text-gray-700 mb-1">
+								From date (optional)
+							</label>
+							<input
+								type="date"
+								value={fromDate}
+								onChange={(e) => setFromDate(e.target.value)}
+								className="w-full px-3 py-2 border rounded"
+							/>
+						</div>
+						<div>
+							<label className="block text-sm text-gray-700 mb-1">
+								To date (optional)
+							</label>
+							<input
+								type="date"
+								value={toDate}
+								onChange={(e) => setToDate(e.target.value)}
+								className="w-full px-3 py-2 border rounded"
+							/>
+						</div>
+						<div className="md:col-span-2 flex gap-2 mt-2 md:mt-0">
+							<button
+								onClick={handleBulkDownload}
+								disabled={bulkDownloading}
+								className={`px-4 py-2 rounded text-white ${
+									bulkDownloading
+										? "bg-gray-400 cursor-not-allowed"
+										: "bg-blue-600 hover:bg-blue-700"
+								}`}
+							>
+								{bulkDownloading
+									? "Downloading..."
+									: "Download All (date range)"}
+							</button>
+							{(fromDate || toDate) && (
+								<div className="text-sm text-gray-600 flex items-center">
+									{itemsInDateRange.length} in range
+								</div>
+							)}
+						</div>
 					</div>
 				</div>
-			</div>
 
-			{filteredBySearch.length === 0 ? (
-				<div className="text-gray-500">No statements found.</div>
-			) : (
-				<div className="space-y-2">
-					{filteredBySearch.map((s) => (
-						<div
-							key={s.key}
-							className="p-4 border rounded flex items-center justify-between hover:bg-gray-50 cursor-pointer"
-							onClick={() => void openStatement(s)}
-						>
-							<div>
-								<div className="font-medium">{s.name}</div>
-								<div className="text-sm text-gray-600">{s.date}</div>
+				{filteredBySearch.length === 0 ? (
+					<div className="text-gray-500">No statements found.</div>
+				) : (
+					<div className="space-y-2">
+						{filteredBySearch.map((s) => (
+							<div
+								key={s.key}
+								className="p-4 border rounded flex items-center justify-between hover:bg-gray-50 cursor-pointer"
+								onClick={() => void openStatement(s)}
+							>
+								<div>
+									<div className="font-medium">{s.name}</div>
+									<div className="text-sm text-gray-600">{s.date}</div>
+								</div>
+								<div className="flex items-center gap-2">
+									<button
+										onClick={(e) => {
+											e.stopPropagation();
+											void handleDownloadSingle(s);
+										}}
+										disabled={singleDownloadingKey === s.key || bulkDownloading}
+										className={`px-3 py-1 text-sm rounded text-white ${
+											singleDownloadingKey === s.key || bulkDownloading
+												? "bg-gray-400 cursor-not-allowed"
+												: "bg-emerald-600 hover:bg-emerald-700"
+										}`}
+									>
+										{singleDownloadingKey === s.key
+											? "Downloading..."
+											: "Download PDF"}
+									</button>
+								</div>
 							</div>
-							<div className="flex items-center gap-2">
+						))}
+					</div>
+				)}
+
+				{/* Modal for viewing a statement */}
+				{showModal && (
+					<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+						<div className="bg-white rounded-lg p-4 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+							<div className="flex items-center justify-between mb-3">
+								<div className="font-semibold">View Pay Statement</div>
 								<button
-									onClick={(e) => {
-										e.stopPropagation();
-										void handleDownloadSingle(s);
-									}}
-									disabled={singleDownloadingKey === s.key || bulkDownloading}
-									className={`px-3 py-1 text-sm rounded text-white ${
-										singleDownloadingKey === s.key || bulkDownloading
-											? "bg-gray-400 cursor-not-allowed"
-											: "bg-emerald-600 hover:bg-emerald-700"
-									}`}
+									onClick={() => setShowModal(false)}
+									className="text-2xl text-gray-600"
 								>
-									{singleDownloadingKey === s.key
-										? "Downloading..."
-										: "Download PDF"}
+									×
 								</button>
 							</div>
+							{loadingModal ? (
+								<div className="p-6 text-center text-gray-600">Loading...</div>
+							) : modalData ? (
+								<PDFGenerator data={modalData} />
+							) : (
+								<div className="p-6 text-center text-gray-600">Not found.</div>
+							)}
 						</div>
-					))}
-				</div>
-			)}
-
-			{/* Modal for viewing a statement */}
-			{showModal && (
-				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-					<div className="bg-white rounded-lg p-4 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-						<div className="flex items-center justify-between mb-3">
-							<div className="font-semibold">View Pay Statement</div>
-							<button
-								onClick={() => setShowModal(false)}
-								className="text-2xl text-gray-600"
-							>
-								×
-							</button>
-						</div>
-						{loadingModal ? (
-							<div className="p-6 text-center text-gray-600">Loading...</div>
-						) : modalData ? (
-							<PDFGenerator data={modalData} />
-						) : (
-							<div className="p-6 text-center text-gray-600">Not found.</div>
-						)}
 					</div>
-				</div>
-			)}
+				)}
 
-			{/* Hidden container for PDF captures */}
-			<div
-				ref={hiddenContainerRef}
-				style={{
-					position: "absolute",
-					left: -10000,
-					top: -10000,
-					background: "#fff",
-					width: "8.5in",
-				}}
-			>
-				{hiddenData && <PayStatement data={hiddenData} preset="bpv1" />}
+				{/* Hidden container for PDF captures */}
+				<div
+					ref={hiddenContainerRef}
+					style={{
+						position: "absolute",
+						left: -10000,
+						top: -10000,
+						background: "#fff",
+						width: "8.5in",
+					}}
+				>
+					{hiddenData && <PayStatement data={hiddenData} preset="bpv1" />}
+				</div>
 			</div>
-		</div>
+		</>
 	);
 }

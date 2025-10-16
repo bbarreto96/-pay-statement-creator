@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import TopBar from "@/components/TopBar";
 import ContractorSelector from "@/components/ContractorSelector";
 import ContractorManager from "@/components/ContractorManager";
@@ -30,6 +30,21 @@ const HomeLayout: React.FC = () => {
 		defaultPeriod?.id || ""
 	);
 
+	// Keep preview data in sync if the pay period changes via TopBar
+	useEffect(() => {
+		setPayStatementData((prev) => {
+			if (!prev) return prev;
+			if (prev.payment.payPeriodId === payPeriodId) return prev;
+			return { ...prev, payment: { ...prev.payment, payPeriodId } };
+		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [payPeriodId]);
+	// If the user changes Pay Period inside the form, reflect it in TopBar
+	useEffect(() => {
+		if (!payStatementData) return;
+		const id = payStatementData.payment.payPeriodId;
+		if (id && id !== payPeriodId) setPayPeriodId(id);
+	}, [payStatementData, payPeriodId]);
 	// When contractor changes, seed the PayStatementForm with defaults for speed
 	const initialData: PayStatementData | undefined = useMemo(() => {
 		if (!selectedContractor) return undefined;
@@ -87,6 +102,13 @@ const HomeLayout: React.FC = () => {
 			<TopBar
 				selectedPayPeriodId={payPeriodId}
 				onChangePayPeriod={setPayPeriodId}
+				onHomeClick={() => {
+					// Reset the Home workspace to initial state
+					setSelectedContractor(null);
+					setPayStatementData(null);
+					setShowPreview(false);
+					setShowContractorManager(false);
+				}}
 			/>
 			<div className="container mx-auto px-4 py-4 grid grid-cols-1 md:grid-cols-12 gap-4">
 				{/* Left rail: Contractor selection */}
@@ -105,6 +127,7 @@ const HomeLayout: React.FC = () => {
 							selectedContractor={selectedContractor || undefined}
 							onContractorSelect={(c) => {
 								setSelectedContractor(c);
+								setPayStatementData(null); // reset persisted form when switching contractors
 								setShowPreview(false);
 							}}
 						/>
@@ -137,7 +160,8 @@ const HomeLayout: React.FC = () => {
 										</div>
 									</div>
 									<PayStatementForm
-										initialData={initialData}
+										// Preserve edits when returning from Preview
+										initialData={payStatementData ?? initialData}
 										onDataChange={setPayStatementData}
 										hideCompanyInfo
 										externalPayPeriodId={payPeriodId}

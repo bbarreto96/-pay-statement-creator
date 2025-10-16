@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
 	getAvailablePayPeriods,
 	getDefaultPayPeriod,
@@ -11,12 +12,15 @@ import {
 interface TopBarProps {
 	selectedPayPeriodId?: string;
 	onChangePayPeriod?: (id: string) => void;
+	onHomeClick?: () => void; // optional: let parent define Home behavior
 }
 
 const TopBar: React.FC<TopBarProps> = ({
 	selectedPayPeriodId,
 	onChangePayPeriod,
+	onHomeClick,
 }) => {
+	const router = useRouter();
 	const periods: PayPeriod[] = getAvailablePayPeriods();
 	const defaultPeriod = getDefaultPayPeriod();
 	const currentId = selectedPayPeriodId || defaultPeriod?.id || "";
@@ -26,9 +30,15 @@ const TopBar: React.FC<TopBarProps> = ({
 			<div className="container mx-auto px-4 h-14 flex items-center justify-between gap-4">
 				{/* Left: Logo/Name + Home */}
 				<div className="flex items-center gap-3">
-					<Link href="/" className="text-black font-semibold hover:text-black">
+					<button
+						type="button"
+						onClick={() => (onHomeClick ? onHomeClick() : router.push("/"))}
+						className="text-black font-semibold hover:underline cursor-pointer"
+						aria-label="Go to Home"
+						title="Go to Home"
+					>
 						Home
-					</Link>
+					</button>
 					<span className="text-black">|</span>
 					<div className="text-sm text-black hidden sm:block">
 						Pay Statement Creator

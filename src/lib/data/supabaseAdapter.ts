@@ -74,9 +74,22 @@ export class SupabaseDataClient implements DataClient {
 		updates: Partial<Contractor>
 	): Promise<boolean> {
 		const supabase = getSupabaseClient();
-		const payload: Partial<AppContractorRow> = {
-			...updates,
-		} as Partial<AppContractorRow>;
+		// Only include columns that exist in the table to avoid errors like
+		// "column does not exist" (e.g., googleDriveFolderId is not in app_contractors)
+		const payload: Partial<AppContractorRow> = {};
+		if (typeof updates.name !== "undefined")
+			payload.name = updates.name as string;
+		if (typeof updates.address !== "undefined")
+			payload.address = updates.address as unknown;
+		if (typeof updates.paymentInfo !== "undefined")
+			payload.paymentInfo = updates.paymentInfo as unknown;
+		if (typeof updates.buildings !== "undefined")
+			payload.buildings = updates.buildings as unknown;
+		if (typeof updates.isActive === "boolean")
+			payload.isActive = updates.isActive;
+		if (Object.prototype.hasOwnProperty.call(updates, "notes"))
+			payload.notes = (updates as { notes?: string | null }).notes ?? null;
+
 		const { error } = await supabase
 			.from("app_contractors")
 			.update(payload)
