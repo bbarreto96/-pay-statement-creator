@@ -1,10 +1,12 @@
 import React from "react";
 import { PayStatementData } from "@/types/payStatement";
+import LogoSvg from "./LogoSvg";
 
 import { getPayPeriodById } from "../utils/payPeriods";
 
 interface PayStatementProps {
 	data: PayStatementData;
+	preset?: string;
 }
 
 const PayStatement: React.FC<PayStatementProps> = ({
@@ -56,16 +58,9 @@ const PayStatement: React.FC<PayStatementProps> = ({
 						gap: "12px",
 					}}
 				>
-					<img
-						src="/Logo-01.png"
-						alt="Element Logo"
-						style={{
-							height: "48px",
-							width: "auto",
-							transform: "translateY(-2px)",
-							display: "block",
-						}}
-					/>
+                        <div style={{ transform: "translateY(-2px)" }}>
+                            <LogoSvg height={48} />
+                        </div>
 					<span
 						style={{
 							fontSize: "16px",
@@ -562,30 +557,6 @@ const PayStatement: React.FC<PayStatementProps> = ({
 					>
 						{isBP ? "Rate" : "Pay Per Visit"}
 					</div>
-					<div
-						style={{
-							width: "25%",
-							fontSize: "10px",
-							fontWeight: 600,
-							textAlign: "center",
-							color: "#474D53",
-							borderRight: "0.5px solid #E5E7EB",
-							paddingRight: "8px",
-						}}
-					>
-						<div
-							style={{
-								width: "25%",
-								fontSize: "10px",
-								fontWeight: 600,
-								textAlign: "center",
-								color: "#474D53",
-								borderRight: "0.5px solid #E5E7EB",
-								paddingRight: "8px",
-							}}
-						>
-							&nbsp;
-						</div>
 						<div
 							style={{
 								width: "25%",
@@ -599,7 +570,6 @@ const PayStatement: React.FC<PayStatementProps> = ({
 						>
 							Qty
 						</div>
-					</div>
 					<div
 						style={{
 							width: "20%",
@@ -773,6 +743,8 @@ const PayStatement: React.FC<PayStatementProps> = ({
 								fontSize: "10px",
 								color: "#6b7280",
 								lineHeight: "1.4",
+								whiteSpace: "pre-wrap",
+								wordBreak: "break-word",
 							}}
 						>
 							{data.notes}

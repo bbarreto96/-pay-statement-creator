@@ -119,9 +119,7 @@ export default function ContractorStatementsPage() {
 			logging: false,
 		});
 
-		// Guard against zero-sized canvas
-		const cW = canvas.width || 1;
-		const cH = canvas.height || 1;
+            // Guard against zero-sized canvas (handled by defaulting width/height to page size below)
 		const imgData = canvas.toDataURL("image/png");
 		const pdf = new jsPDF("p", "mm", "letter");
 
@@ -162,8 +160,6 @@ export default function ContractorStatementsPage() {
 			logging: false,
 		});
 
-		const cW = canvas.width || 1;
-		const cH = canvas.height || 1;
 		const imgData = canvas.toDataURL("image/png");
 
 		// Add page if not the first
@@ -223,7 +219,6 @@ export default function ContractorStatementsPage() {
 					data = await ps.load(s.key);
 				}
 				if (data) {
-					// eslint-disable-next-line no-await-in-loop
 					await addStatementToPdf(pdf, data, s.dateISO || s.date, isFirst);
 					isFirst = false;
 				}

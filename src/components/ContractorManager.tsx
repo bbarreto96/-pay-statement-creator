@@ -3,17 +3,32 @@
 import React, { useState, useEffect } from "react";
 import { Contractor, BuildingAssignment } from "@/types/contractor";
 import { getDataClient } from "@/lib/data";
+const isSupabase = process.env.NEXT_PUBLIC_DATA_BACKEND === "supabase";
+
+
 
 interface ContractorManagerProps {
 	onClose: () => void;
+	onSaved?: () => void;
 }
 
-const ContractorManager: React.FC<ContractorManagerProps> = ({ onClose }) => {
+const ContractorManager: React.FC<ContractorManagerProps> = ({ onClose, onSaved }) => {
 	const [contractors, setContractors] = useState<Contractor[]>([]);
 	const [editingContractor, setEditingContractor] = useState<Contractor | null>(
 		null
 	);
 	const [showAddForm, setShowAddForm] = useState(false);
+
+		const [toast, setToast] = useState<{
+			type: "success" | "error";
+			message: string;
+		} | null>(null);
+
+		useEffect(() => {
+			if (!toast) return;
+			const t = setTimeout(() => setToast(null), 3000);
+			return () => clearTimeout(t);
+		}, [toast]);
 
 	// Refresh contractor list from backend
 	const refreshContractorList = async () => {
@@ -73,7 +88,7 @@ const ContractorManager: React.FC<ContractorManagerProps> = ({ onClose }) => {
 
 	const handleSave = async () => {
 		if (!formData.name) {
-			alert("Please enter the contractor's name");
+			setToast({ type: "error", message: "Please enter the contractor's name" });
 			return;
 		}
 
@@ -90,7 +105,10 @@ const ContractorManager: React.FC<ContractorManagerProps> = ({ onClose }) => {
 			}
 
 			// Refresh the contractor list
+				setToast({ type: "success", message: isSupabase ? "Saved to Supabase" : "Saved locally" });
+
 			await refreshContractorList();
+			onSaved?.();
 			resetForm();
 		} catch (err: unknown) {
 			console.error("Failed to save contractor", err);
@@ -102,9 +120,29 @@ const ContractorManager: React.FC<ContractorManagerProps> = ({ onClose }) => {
 					  "message" in (err as Record<string, unknown>)
 					? String((err as { message?: unknown }).message)
 					: "Failed to save contractor. Please try again.";
-			alert(msg);
+			setToast({ type: "error", message: msg });
 		}
 	};
+
+		const handleDeactivate = async (contractor: Contractor) => {
+			const name = contractor.name || "this contractor";
+			if (!confirm(`Remove ${name}? This will archive them and hide from active lists.`)) return;
+			try {
+				const dc = getDataClient();
+				await dc.updateContractor(contractor.id, { isActive: false });
+				setToast({ type: "success", message: isSupabase ? "Contractor archived in Supabase" : "Contractor removed locally" });
+				await refreshContractorList();
+				onSaved?.();
+				// If we were editing this contractor, return to list
+				if (editingContractor && editingContractor.id === contractor.id) {
+					resetForm();
+				}
+			} catch (e) {
+				console.error("Failed to remove contractor", e);
+				setToast({ type: "error", message: "Failed to remove contractor. Please try again." });
+			}
+		};
+
 
 	const addBuilding = () => {
 		const newBuilding: BuildingAssignment = {
@@ -122,6 +160,8 @@ const ContractorManager: React.FC<ContractorManagerProps> = ({ onClose }) => {
 
 	const updateBuilding = (index: number, building: BuildingAssignment) => {
 		const buildings = [...(formData.buildings || [])];
+
+
 		buildings[index] = building;
 		setFormData({ ...formData, buildings });
 	};
@@ -134,18 +174,41 @@ const ContractorManager: React.FC<ContractorManagerProps> = ({ onClose }) => {
 
 	return (
 		<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-			<div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+
+				{/* Toast */}
+				{toast && (
+					<div
+						className={`fixed top-4 right-4 z-[60] px-4 py-2 rounded shadow-lg border text-sm ${
+							toast.type === "success"
+								? "bg-emerald-50 border-emerald-300 text-emerald-800"
+								: "bg-red-50 border-red-300 text-red-800"
+						}`}
+					>
+						{toast.message}
+					</div>
+				)}
+
+			<div className="app-panel p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
 				<div className="flex justify-between items-center mb-6">
-					<h2 className="text-2xl font-bold text-gray-800">
+					<h2 className="section-title text-2xl text-gray-800">
 						Contractor Management
 					</h2>
 					<button
 						onClick={onClose}
 						className="text-gray-500 hover:text-gray-700 text-2xl"
-					>
+
+>
 						×
 					</button>
 				</div>
+
+				{isSupabase && (
+					<div className="mb-4">
+						<span className="inline-block text-xs px-2 py-1 rounded bg-emerald-100 text-emerald-700">
+							Data source: Supabase
+						</span>
+					</div>
+				)}
 
 				{!showAddForm ? (
 					<>
@@ -153,7 +216,7 @@ const ContractorManager: React.FC<ContractorManagerProps> = ({ onClose }) => {
 						<div className="mb-4">
 							<button
 								onClick={() => setShowAddForm(true)}
-								className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+								className="btn-primary text-sm"
 							>
 								Add New Contractor
 							</button>
@@ -177,9 +240,9 @@ const ContractorManager: React.FC<ContractorManagerProps> = ({ onClose }) => {
 											.replace(/[:.]/g, "-")}.json`;
 										a.click();
 										URL.revokeObjectURL(url);
-									} catch (e) {
-										alert("Failed to export contractors");
-									}
+                                    } catch {
+                                        alert("Failed to export contractors");
+                                    }
 								}}
 								className="px-3 py-2 bg-gray-100 rounded border hover:bg-gray-200"
 							>
@@ -219,9 +282,9 @@ const ContractorManager: React.FC<ContractorManagerProps> = ({ onClose }) => {
 											}
 											await refreshContractorList();
 											alert("Contractors imported and synced to Supabase");
-										} catch (e) {
-											alert("Invalid JSON file");
-										}
+                                            } catch {
+                                                alert("Invalid JSON file");
+                                            }
 									};
 									input.click();
 								}}
@@ -265,9 +328,9 @@ const ContractorManager: React.FC<ContractorManagerProps> = ({ onClose }) => {
 										alert(
 											"Local contractors synced to Supabase and cleared from localStorage"
 										);
-									} catch (e) {
-										alert("Failed to sync local contractors");
-									}
+                                        } catch {
+                                            alert("Failed to sync local contractors");
+                                        }
 								}}
 								className="px-3 py-2 bg-gray-100 rounded border hover:bg-gray-200"
 							>
@@ -302,6 +365,12 @@ const ContractorManager: React.FC<ContractorManagerProps> = ({ onClose }) => {
 										>
 											Edit
 										</button>
+							<button
+								onClick={() => handleDeactivate(contractor)}
+								className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 ml-2"
+							>
+								Remove
+							</button>
 									</div>
 								</div>
 							))}
@@ -572,24 +641,7 @@ const ContractorManager: React.FC<ContractorManagerProps> = ({ onClose }) => {
 													style={{ color: "#000000" }}
 												/>
 											</div>
-											<div>
-												<label className="block text-sm font-medium text-gray-700 mb-1">
-													Pay Per Visit
-												</label>
-												<input
-													type="number"
-													step="0.01"
-													value={building.payPerVisit}
-													onChange={(e) =>
-														updateBuilding(index, {
-															...building,
-															payPerVisit: parseFloat(e.target.value) || 0,
-														})
-													}
-													className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-													style={{ color: "#000000" }}
-												/>
-											</div>
+
 											<div>
 												<label className="block text-sm font-medium text-gray-700 mb-1">
 													Pay Type
@@ -687,6 +739,16 @@ const ContractorManager: React.FC<ContractorManagerProps> = ({ onClose }) => {
 									{editingContractor ? "Update Contractor" : "Add Contractor"}
 								</button>
 							</div>
+							{editingContractor && (
+								<div className="mt-3 text-center">
+									<button
+										onClick={() => handleDeactivate(editingContractor)}
+										className="px-8 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors text-lg font-semibold"
+									>
+										Remove Contractor
+									</button>
+								</div>
+							)}
 						</div>
 					</>
 				)}

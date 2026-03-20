@@ -47,21 +47,20 @@ function generateBiWeeklyPeriods(
 	return periods;
 }
 
+const PAY_PERIOD_START_ISO = "2025-08-18";
+const FUTURE_RANGE_DAYS = 370; // keep about a year of future periods available
+const todayISO = formatISO(new Date());
+const futureEndDate = new Date(`${todayISO}T00:00:00`);
+futureEndDate.setDate(futureEndDate.getDate() + FUTURE_RANGE_DAYS);
 const GENERATED_PERIODS: PayPeriod[] = generateBiWeeklyPeriods(
-	"2025-08-18",
-	"2026-08-30"
+	PAY_PERIOD_START_ISO,
+	formatISO(futureEndDate)
 );
 
+// Previously we limited "available" periods to recent ones (end + 9 days).
+// To enable selecting past pay periods, expose the full generated range here.
 export const getAvailablePayPeriods = (): PayPeriod[] => {
-	const today = new Date();
-	const cutoffDays = 9; // show through 9 days after end
-
-	return GENERATED_PERIODS.filter((period) => {
-		const endDate = new Date(`${period.endDate}T00:00:00`);
-		const cutoffDate = new Date(endDate);
-		cutoffDate.setDate(cutoffDate.getDate() + cutoffDays);
-		return today <= cutoffDate;
-	});
+    return GENERATED_PERIODS;
 };
 
 export const getCurrentPayPeriod = (): PayPeriod | null => {
@@ -78,6 +77,12 @@ export const getCurrentPayPeriod = (): PayPeriod | null => {
 
 export const getPayPeriodById = (id: string): PayPeriod | null => {
 	return GENERATED_PERIODS.find((period) => period.id === id) || null;
+};
+
+
+// Find a pay period by its end date (ISO YYYY-MM-DD)
+export const getPayPeriodByEndDate = (endISO: string): PayPeriod | null => {
+	return GENERATED_PERIODS.find((period) => period.endDate === endISO) || null;
 };
 
 export const getDefaultPayPeriod = (): PayPeriod | null => {

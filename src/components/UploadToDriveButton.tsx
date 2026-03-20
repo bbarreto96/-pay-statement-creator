@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { PayStatementData } from "@/types/payStatement";
@@ -38,6 +38,12 @@ const UploadToDriveButton: React.FC<Props> = ({ data, targetRef }) => {
 	const [message, setMessage] = useState<string | null>(null);
 	const [fileLink, setFileLink] = useState<string | null>(null);
 	const [accessToken, setAccessToken] = useState<string | null>(null);
+
+	useEffect(() => {
+		if (!message || fileLink) return;
+		const t = setTimeout(() => setMessage(null), 4000);
+		return () => clearTimeout(t);
+	}, [message, fileLink]);
 
 	const getClientId = () => process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
 	const ensureGisLoaded = async () => {
@@ -110,9 +116,6 @@ const UploadToDriveButton: React.FC<Props> = ({ data, targetRef }) => {
 		const imgData = canvas.toDataURL("image/jpeg", 0.85);
 		const pdf = new jsPDF({ orientation: "p", unit: "pt", format: "letter" });
 
-		const pdfWidth = pdf.internal.pageSize.getWidth();
-		const pdfHeight = pdf.internal.pageSize.getHeight();
-
 		const pxToPt = (px: number) => (px * 72) / 96;
 		const width = pxToPt(targetW);
 		const height = pxToPt(targetH);
@@ -154,7 +157,7 @@ const UploadToDriveButton: React.FC<Props> = ({ data, targetRef }) => {
 					const token = await getAccessToken();
 					authHeader = { Authorization: `Bearer ${token}` };
 				}
-			} catch (e) {
+                } catch {
 				// If OAuth not configured, fall back to service account (may fail on personal Gmail)
 			}
 
@@ -183,8 +186,6 @@ const UploadToDriveButton: React.FC<Props> = ({ data, targetRef }) => {
 			setMessage(`Upload error: ${msg}`);
 		} finally {
 			setUploading(false);
-			// Auto clear message after a short delay (leave link if present)
-			setTimeout(() => setMessage(null), 4000);
 		}
 	};
 
@@ -193,11 +194,7 @@ const UploadToDriveButton: React.FC<Props> = ({ data, targetRef }) => {
 			<button
 				onClick={handleUpload}
 				disabled={uploading}
-				className={`px-6 py-3 rounded-lg text-white transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-					uploading
-						? "bg-gray-400 cursor-not-allowed"
-						: "bg-indigo-600 hover:bg-indigo-700"
-				}`}
+				className={`btn-secondary ${uploading ? "opacity-60 cursor-not-allowed" : ""}`}
 				title="Upload this pay statement to Google Drive"
 			>
 				📤 {uploading ? "Uploading..." : "Upload to Drive"}

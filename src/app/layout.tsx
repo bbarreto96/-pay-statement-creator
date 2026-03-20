@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Poppins } from "next/font/google";
+import { Geist, Geist_Mono, Poppins, Fraunces, Manrope } from "next/font/google";
 import "./globals.css";
+import { PayPeriodProvider } from "@/contexts/PayPeriodContext";
 
 const geistSans = Geist({
 	variable: "--font-geist-sans",
@@ -18,6 +19,18 @@ const poppins = Poppins({
 	weight: ["400", "500", "600"],
 });
 
+const manrope = Manrope({
+	variable: "--font-body",
+	subsets: ["latin"],
+	weight: ["400", "500", "600", "700"],
+});
+
+const fraunces = Fraunces({
+	variable: "--font-display",
+	subsets: ["latin"],
+	weight: ["600", "700"],
+});
+
 export const metadata: Metadata = {
 	title: "Pay Statement Creator",
 	description: "Create professional payment statements with ease",
@@ -31,10 +44,10 @@ export default function RootLayout({
 	return (
 		<html lang="en">
 			<body
-				className={`${geistSans.variable} ${geistMono.variable} ${poppins.variable} antialiased`}
+				className={`${geistSans.variable} ${geistMono.variable} ${poppins.variable} ${manrope.variable} ${fraunces.variable} antialiased`}
 				style={{ overscrollBehaviorX: "auto" }}
 			>
-				{children}
+				<PayPeriodProvider>{children}</PayPeriodProvider>
 			</body>
 		</html>
 	);

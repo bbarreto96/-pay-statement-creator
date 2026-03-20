@@ -2,7 +2,16 @@
 
 :root {
 	--background: #ffffff;
-	--foreground: #000000; /* Force high-contrast black text across UI */
+	--foreground: #1f2a2e;
+	--ink: #1f2a2e;
+	--ink-soft: #3e4b50;
+	--paper: #ffffff;
+	--paper-soft: #ffffff;
+	--accent: #4fa3ff;
+	--accent-strong: #2f80ed;
+	--teal: #26a98e;
+	--teal-strong: #1b826e;
+	--shadow: 0 6px 14px rgba(31, 42, 46, 0.06);
 }
 
 @theme inline {
@@ -11,6 +20,8 @@
 	--font-sans: var(--font-geist-sans);
 	--font-mono: var(--font-geist-mono);
 	--font-poppins: var(--font-poppins);
+	--font-body: var(--font-body);
+	--font-display: var(--font-display);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -23,8 +34,193 @@
 
 body {
 	background: var(--background);
-	color: var(--foreground);
-	font-family: Arial, Helvetica, sans-serif;
+	color: var(--ink);
+	font-family: var(--font-body), sans-serif;
+}
+
+.app-shell {
+	min-height: 100vh;
+	color: var(--ink);
+}
+
+.app-topbar {
+	background: #ffffff;
+	border-bottom: 2px solid #1e1e1e;
+	box-shadow: none;
+}
+
+.app-panel {
+	background: var(--paper);
+	border: 2px solid #1e1e1e;
+	border-radius: 8px;
+	box-shadow: none;
+}
+
+.app-panel.soft {
+	background: #ffffff;
+	border-color: #dcdcdc;
+	border-width: 1px;
+}
+
+.section-title {
+	font-family: var(--font-display), serif;
+	letter-spacing: -0.02em;
+}
+
+.input-field {
+	width: 100%;
+	border-radius: 6px;
+	border: 1px solid #dcdcdc;
+	background: #fff;
+	padding: 8px 10px;
+	color: var(--ink);
+	box-shadow: none;
+}
+
+.input-field:focus {
+	outline: none;
+	border-color: var(--accent);
+	box-shadow: 0 0 0 2px rgba(79, 163, 255, 0.15);
+}
+
+.btn-primary {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	border-radius: 999px;
+	padding: 8px 16px;
+	font-weight: 600;
+	color: white;
+	background: var(--accent);
+	border: 1px solid var(--accent);
+	box-shadow: none;
+	transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.btn-primary:hover {
+	transform: translateY(-1px);
+	background: var(--accent-strong);
+}
+
+.btn-secondary {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	border-radius: 999px;
+	padding: 8px 16px;
+	font-weight: 600;
+	color: var(--accent);
+	background: #ffffff;
+	border: 1px solid var(--accent);
+	transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.btn-secondary:hover {
+	transform: translateY(-1px);
+	background: rgba(79, 163, 255, 0.08);
+}
+
+.btn-ghost {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	border-radius: 8px;
+	padding: 6px 12px;
+	font-weight: 600;
+	color: var(--ink);
+	background: transparent;
+	border: 1px solid #dcdcdc;
+	transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.btn-ghost:hover {
+	transform: translateY(-1px);
+	background: rgba(79, 163, 255, 0.06);
+}
+
+.btn-dark {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	border-radius: 999px;
+	padding: 10px 18px;
+	font-weight: 600;
+	color: white;
+	background: #1f2a2e;
+	transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.btn-outline {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	border-radius: 999px;
+	padding: 6px 12px;
+	font-weight: 600;
+	color: var(--accent);
+	background: transparent;
+	border: 2px solid var(--accent);
+	transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.btn-outline:hover {
+	transform: translateY(-1px);
+	background: rgba(79, 163, 255, 0.08);
+}
+
+.summary-table {
+	border-collapse: collapse;
+	width: 100%;
+	font-size: 12px;
+}
+
+.summary-table th,
+.summary-table td {
+	border: 1px solid #dcdcdc;
+	padding: 8px 10px;
+}
+
+.summary-table thead {
+	background: #f7f7f7;
+	color: #4b4b4b;
+}
+
+.summary-table tbody tr:hover {
+	background: #f9fbff;
+}
+
+.table-resize {
+	resize: both;
+	overflow: auto;
+	max-width: 100%;
+	max-height: 70vh;
+	min-width: 320px;
+	min-height: 240px;
+}
+
+.btn-dark:hover {
+	transform: translateY(-1px);
+	background: #11181b;
+}
+
+.rise-in {
+	animation: riseIn 0.45s ease both;
+}
+
+@keyframes riseIn {
+	from {
+		opacity: 0;
+		transform: translateY(12px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
 }
 
 /* Print styles for better PDF generation */

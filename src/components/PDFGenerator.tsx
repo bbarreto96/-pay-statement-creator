@@ -12,10 +12,20 @@ import UploadToDriveButton from "./UploadToDriveButton";
 
 interface PDFGeneratorProps {
 	data: PayStatementData;
+	preset?: "current" | "bpv1";
+	onPresetChange?: (p: "current" | "bpv1") => void;
 }
 
-const PDFGenerator: React.FC<PDFGeneratorProps> = ({ data }) => {
-	const [preset, setPreset] = useState<"current" | "bpv1">("bpv1");
+const PDFGenerator: React.FC<PDFGeneratorProps> = ({ data, preset: controlledPreset, onPresetChange }) => {
+	const [uncontrolledPreset, setUncontrolledPreset] = useState<"current" | "bpv1">("bpv1");
+	const preset = controlledPreset ?? uncontrolledPreset;
+        const setPreset = (p: "current" | "bpv1") => {
+            if (onPresetChange) {
+                onPresetChange(p);
+            } else {
+                setUncontrolledPreset(p);
+            }
+        };
 	const componentRef = useRef<HTMLDivElement>(null);
 
 	// Print functionality using react-to-print
@@ -77,13 +87,9 @@ const PDFGenerator: React.FC<PDFGeneratorProps> = ({ data }) => {
 					<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 					<style>
 						@page {
-							size: A4;
-							margin: 0.5in;
+							size: Letter;
+							margin: 0;
 						}
-							@page {
-								size: Letter;
-								margin: 0;
-							}
 
 						* {
 							margin: 0;
@@ -140,9 +146,9 @@ const PDFGenerator: React.FC<PDFGeneratorProps> = ({ data }) => {
 			// Wait for content to load
 			printWindow.document.close();
 			// Ensure title is applied for Save as PDF default filename
-			try {
-				printWindow.document.title = safeTitle;
-			} catch (e) {}
+                try {
+                    printWindow.document.title = safeTitle;
+                } catch {}
 
 			// Wait for fonts and images to load
 			await new Promise((resolve) => {
@@ -177,26 +183,39 @@ const PDFGenerator: React.FC<PDFGeneratorProps> = ({ data }) => {
 		try {
 			console.log("Starting fallback PDF generation...");
 
+				// Ensure all images inside the component are loaded before capture
+				const imgs = Array.from(componentRef.current.querySelectorAll("img"));
+				if (imgs.length) {
+					await Promise.all(
+						imgs.map((img) =>
+							img.complete && img.naturalWidth > 0
+								? Promise.resolve()
+								: new Promise<void>((resolve) => {
+									const done = () => resolve();
+									img.onload = done;
+									img.onerror = done;
+								})
+						)
+					);
+				}
+
 			// Simple html2canvas approach
 			// Force capture at exact Letter @ 96dpi (816x1056 px) to match CSS inches
 			const targetW = Math.round(8.5 * 96);
 			const targetH = Math.round(11 * 96);
-			const canvas = await html2canvas(componentRef.current, {
+				const canvas = await html2canvas(componentRef.current, {
 				width: targetW,
 				height: targetH,
 				windowWidth: targetW,
 				windowHeight: targetH,
 				scale: Math.min(3, Math.max(2, window.devicePixelRatio || 1)),
-				useCORS: true,
+					useCORS: true,
 				backgroundColor: "#ffffff",
 				logging: false,
 			});
 
 			const imgData = canvas.toDataURL("image/png");
 			const pdf = new jsPDF({ orientation: "p", unit: "pt", format: "letter" });
-
-			const pdfWidth = pdf.internal.pageSize.getWidth();
-			const pdfHeight = pdf.internal.pageSize.getHeight();
 
 			// Map CSS px to PDF points (72 dpi) so inches match exactly: 1in CSS (96px) = 72pt
 			const pxToPt = (px: number) => (px * 72) / 96;
@@ -228,13 +247,13 @@ const PDFGenerator: React.FC<PDFGeneratorProps> = ({ data }) => {
 			<div className="flex gap-4 justify-center print:hidden flex-wrap items-center">
 				<button
 					onClick={generatePDF}
-					className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+					className="btn-primary"
 				>
 					🖨️ Print/Save as PDF (Recommended)
 				</button>
 				<button
 					onClick={generatePDFCanvas}
-					className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors"
+					className="btn-secondary"
 				>
 					📄 Download PDF (Alternative)
 				</button>
@@ -246,7 +265,7 @@ const PDFGenerator: React.FC<PDFGeneratorProps> = ({ data }) => {
 					<select
 						value={preset}
 						onChange={(e) => setPreset(e.target.value as "current" | "bpv1")}
-						className="px-3 py-2 border rounded-md text-sm"
+						className="input-field text-sm"
 					>
 						<option value="bpv1">Best Practices</option>
 						<option value="current">Current</option>

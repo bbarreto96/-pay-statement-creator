@@ -10,15 +10,15 @@ export default function SettingsPage() {
 	const [companyPhone, setCompanyPhone] = useState("425-591-9427");
 
 	return (
-		<div className="min-h-screen bg-white text-black">
+		<div className="min-h-screen app-shell">
 			<TopBar />
-			<main className="container mx-auto p-6">
-				<h1 className="text-2xl font-semibold mb-4">Settings</h1>
-				<p className="text-black mb-6">
+			<main className="max-w-5xl mx-auto p-6">
+				<h1 className="section-title text-2xl mb-4">Settings</h1>
+				<p className="text-gray-700 mb-6">
 					Company information is configured here and used when generating PDFs.
 				</p>
 
-				<div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white p-4 rounded-lg border">
+				<div className="grid grid-cols-1 md:grid-cols-2 gap-4 app-panel p-4">
 					<div>
 						<label className="block text-sm font-medium text-black mb-1">
 							Company Name

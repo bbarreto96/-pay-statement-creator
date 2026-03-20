@@ -31,7 +31,7 @@ const StreamlinedPayroll: React.FC<StreamlinedPayrollProps> = ({
 	onPayStatementGenerate,
 }) => {
 	// Initialize contractors with fresh data from localStorage
-	const [contractors, setContractors] = useState<Contractor[]>(() => {
+    const [contractors] = useState<Contractor[]>(() => {
 		refreshContractorDatabase();
 		return getActiveContractors();
 	});

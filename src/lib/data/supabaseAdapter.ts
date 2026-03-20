@@ -1,6 +1,7 @@
 import { Contractor } from "@/types/contractor";
 import { DataClient } from ".";
 import { getSupabaseClient } from "@/lib/supabase/client";
+import { recordSupabaseError, recordSupabaseWrite } from "@/lib/supabase/status";
 
 type AppContractorRow = {
 	id?: string;
@@ -60,13 +61,19 @@ export class SupabaseDataClient implements DataClient {
 			isActive: c.isActive ?? true,
 			notes: c.notes ?? null,
 		};
-		const { data, error } = await supabase
-			.from("app_contractors")
-			.insert(payload)
-			.select("*")
-			.single();
-		if (error) throw error;
-		return data as unknown as Contractor;
+		try {
+			const { data, error } = await supabase
+				.from("app_contractors")
+				.insert(payload)
+				.select("*")
+				.single();
+			if (error) throw error;
+			recordSupabaseWrite();
+			return data as unknown as Contractor;
+		} catch (err) {
+			recordSupabaseError(err);
+			throw err;
+		}
 	}
 
 	async updateContractor(
@@ -90,11 +97,17 @@ export class SupabaseDataClient implements DataClient {
 		if (Object.prototype.hasOwnProperty.call(updates, "notes"))
 			payload.notes = (updates as { notes?: string | null }).notes ?? null;
 
-		const { error } = await supabase
-			.from("app_contractors")
-			.update(payload)
-			.eq("id", id);
-		if (error) throw error;
-		return true;
+		try {
+			const { error } = await supabase
+				.from("app_contractors")
+				.update(payload)
+				.eq("id", id);
+			if (error) throw error;
+			recordSupabaseWrite();
+			return true;
+		} catch (err) {
+			recordSupabaseError(err);
+			throw err;
+		}
 	}
 }
