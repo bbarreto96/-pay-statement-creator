@@ -108,9 +108,15 @@ const HomeLayout: React.FC = () => {
 		} catch {}
 	}, []);
 
+	// Ref to suppress spurious saves while a session load is in flight
+	const isLoadingSessionRef = React.useRef(false);
+
 	// When pay period changes, load that period's session from store (Supabase or local)
 	useEffect(() => {
 		let cancelled = false;
+		isLoadingSessionRef.current = true;
+		// Reset immediately so stale data from the previous period doesn't flash
+		setSessionDone({});
 		setSyncState("loading");
 		(async () => {
 				try {
@@ -142,10 +148,13 @@ const HomeLayout: React.FC = () => {
 						setSyncBackend("local");
 						setSyncState("error");
 					}
+				} finally {
+					if (!cancelled) isLoadingSessionRef.current = false;
 				}
 			})();
 			return () => {
 				cancelled = true;
+				isLoadingSessionRef.current = false;
 			};
 		}, [sessionsStore, payPeriodId]);
 
@@ -183,6 +192,9 @@ const HomeLayout: React.FC = () => {
 			} catch {}
 		}, [payPeriodId, sessionDone]);
 		const doSave = React.useCallback(async () => {
+			// Don't save while a session load is in flight — the changed sessionDone
+			// is coming from the load itself, not from a user action.
+			if (isLoadingSessionRef.current) return;
 			if (savingRef.current) {
 				pendingRef.current = true;
 				return;
