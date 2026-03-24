@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { formatUSD } from "@/utils/format";
 
 export interface SummaryEntry {
@@ -30,6 +30,12 @@ const SessionSummary: React.FC<SessionSummaryProps> = ({
   onExportCsv,
   onEmailAll,
 }) => {
+  const [confirmingClear, setConfirmingClear] = useState(false);
+
+  const handleClearClick = () => setConfirmingClear(true);
+  const handleClearConfirm = () => { onClear(); setConfirmingClear(false); };
+  const handleClearCancel = () => setConfirmingClear(false);
+
   return (
     <div className="mt-4 w-full p-3 app-panel soft">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -40,7 +46,15 @@ const SessionSummary: React.FC<SessionSummaryProps> = ({
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2 w-full md:w-auto md:justify-end">
-          <button onClick={onClear} className="btn-ghost text-xs md:text-sm">Clear</button>
+          {confirmingClear ? (
+            <>
+              <span className="text-xs text-red-700 font-medium">Clear all session data?</span>
+              <button onClick={handleClearConfirm} className="btn-ghost text-xs md:text-sm text-red-700 border-red-300">Yes, clear</button>
+              <button onClick={handleClearCancel} className="btn-outline text-xs md:text-sm">Cancel</button>
+            </>
+          ) : (
+            <button onClick={handleClearClick} className="btn-ghost text-xs md:text-sm">Clear</button>
+          )}
           <button onClick={onDownloadPdf} className="btn-outline text-xs md:text-sm">Download PDF</button>
           <button onClick={onExportCsv} className="btn-outline text-xs md:text-sm">Export CSV</button>
           <button onClick={onEmailAll} className="btn-outline text-xs md:text-sm">Send All via Email</button>
@@ -68,7 +82,15 @@ const SessionSummary: React.FC<SessionSummaryProps> = ({
         )}
       </div>
       <div className="mt-2 flex items-center justify-between">
-        <button onClick={onClear} className="text-xs text-gray-600 hover:text-gray-800 underline">Clear session</button>
+        {confirmingClear ? (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-red-700 font-medium">Are you sure?</span>
+            <button onClick={handleClearConfirm} className="text-xs text-red-700 underline hover:text-red-900">Yes, clear</button>
+            <button onClick={handleClearCancel} className="text-xs text-gray-600 underline hover:text-gray-800">Cancel</button>
+          </div>
+        ) : (
+          <button onClick={handleClearClick} className="text-xs text-gray-600 hover:text-gray-800 underline">Clear session</button>
+        )}
       </div>
     </div>
   );

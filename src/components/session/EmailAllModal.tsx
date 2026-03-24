@@ -8,6 +8,7 @@ import { renderPayStatementPdfBase64 } from "@/lib/pdf/renderPayStatementPdf";
 import { PayStatementData } from "@/types/payStatement";
 import { getPayStatementsClient } from "@/lib/data/payStatements";
 import { getPayPeriodById } from "@/utils/payPeriods";
+import { getCompanyConfig } from "@/lib/companyConfig";
 
 type EntryStatus = "Pending" | "Preparing" | "Rendered" | "Sent" | "Draft" | "Failed";
 
@@ -26,16 +27,17 @@ export interface EmailAllModalProps {
 // Build PayStatementData when no saved statement is found
 const buildFallbackData = (entry: SummaryEntry, c?: Contractor, payPeriodId?: string): PayStatementData => {
   const amt = Math.round((entry.amount || 0) * 100) / 100; // round to cents
+  const co = getCompanyConfig();
   return {
-    companyName: "ELEMENT CLEANING SYSTEMS LLC",
+    companyName: co.name,
     companyAddress: {
-      street: "1400 112th Ave Se",
-      suite: "Suite 100",
-      city: "Bellevue",
-      state: "WA",
-      zipCode: "98004",
+      street: co.address.street,
+      suite: co.address.suite || "",
+      city: co.address.city,
+      state: co.address.state,
+      zipCode: co.address.zipCode,
     },
-    companyPhone: "425-591-9427",
+    companyPhone: co.phone,
     paidTo: {
       name: entry.name,
       address: {

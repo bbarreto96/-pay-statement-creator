@@ -12,6 +12,7 @@ import {
 	getDefaultPayPeriod,
 	PayPeriod,
 } from "../utils/payPeriods";
+import { getCompanyConfig } from "@/lib/companyConfig";
 
 interface PayStatementFormProps {
 	onDataChange: (data: PayStatementData) => void;
@@ -31,17 +32,19 @@ const PayStatementForm: React.FC<PayStatementFormProps> = ({
 	const [availablePayPeriods] = useState<PayPeriod[]>(getAvailablePayPeriods());
 	const currentPayPeriod = getDefaultPayPeriod();
 
-	const [formData, setFormData] = useState<PayStatementData>(
-		initialData || {
-			companyName: "ELEMENT CLEANING SYSTEMS LLC",
+	const [formData, setFormData] = useState<PayStatementData>(() => {
+		if (initialData) return initialData;
+		const co = getCompanyConfig();
+		return {
+			companyName: co.name,
 			companyAddress: {
-				street: "1400 112th Ave Se",
-				suite: "Suite 100",
-				city: "Bellevue",
-				state: "WA",
-				zipCode: "98004",
+				street: co.address.street,
+				suite: co.address.suite || "",
+				city: co.address.city,
+				state: co.address.state,
+				zipCode: co.address.zipCode,
 			},
-			companyPhone: "425-591-9427",
+			companyPhone: co.phone,
 			paidTo: {
 				name: "[Name]",
 				address: {
@@ -65,8 +68,8 @@ const PayStatementForm: React.FC<PayStatementFormProps> = ({
 				},
 			],
 			totalPayment: 0,
-		}
-	);
+		};
+	});
 
 	// Manual entry helpers: encode pay type + quantity in notes
 	type ManualMeta = { payType: "perVisit" | "hourly"; qty: number };

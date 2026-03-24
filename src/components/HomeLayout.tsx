@@ -16,6 +16,7 @@ import { getDataClient } from "@/lib/data";
 import { getPayStatementsClient } from "@/lib/data/payStatements";
 import { formatUSD } from "@/utils/format";
 import { getSessionsStore } from "@/lib/sessions";
+import { getCompanyConfig } from "@/lib/companyConfig";
 
 import { usePayPeriod } from "@/contexts/PayPeriodContext";
 /**
@@ -48,6 +49,7 @@ const HomeLayout: React.FC = () => {
 
 		// Active contractors for session checklist
 		const [activeContractors, setActiveContractors] = useState<Contractor[]>([]);
+		const [contractorsLoading, setContractorsLoading] = useState(true);
 
 		// Session is scoped per pay period: key = `pay-session-progress:${payPeriodId}`
 		const storageKeyForPeriod = (id: string) => `pay-session-progress:${id || "_none"}`;
@@ -167,6 +169,8 @@ const HomeLayout: React.FC = () => {
 				setActiveContractors(sorted);
 			} catch (e) {
 				console.error("Failed to load active contractors", e);
+			} finally {
+				setContractorsLoading(false);
 			}
 		}, []);
 		useEffect(() => {
@@ -615,17 +619,17 @@ const HomeLayout: React.FC = () => {
 					(b.payType === "hourly" ? b.hourlyRate || 0 : b.payPerVisit || 0) ||
 					0,
 			}));
+		const co = getCompanyConfig();
 		return {
-
-			companyName: "ELEMENT CLEANING SYSTEMS LLC",
+			companyName: co.name,
 			companyAddress: {
-				street: "1400 112th Ave Se",
-				suite: "Suite 100",
-				city: "Bellevue",
-				state: "WA",
-				zipCode: "98004",
+				street: co.address.street,
+				suite: co.address.suite || "",
+				city: co.address.city,
+				state: co.address.state,
+				zipCode: co.address.zipCode,
 			},
-			companyPhone: "425-591-9427",
+			companyPhone: co.phone,
 			paidTo: {
 				name: selectedContractor.name,
 				address: {
@@ -715,11 +719,15 @@ const HomeLayout: React.FC = () => {
 								Manage
 							</button>
 						</div>
-						<ContractorSelector
-							selectedContractor={selectedContractor || undefined}
-							contractors={activeContractors}
-							onContractorSelect={openContractor}
-						/>
+						{contractorsLoading ? (
+							<div className="py-6 text-center text-sm text-gray-500">Loading contractors…</div>
+						) : (
+							<ContractorSelector
+								selectedContractor={selectedContractor || undefined}
+								contractors={activeContractors}
+								onContractorSelect={openContractor}
+							/>
+						)}
 							{/* Email modal for sending all PDFs */}
 							{emailModalOpen && (
 								<EmailAllModal

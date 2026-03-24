@@ -12,6 +12,7 @@ import {
 	getActiveContractors,
 	refreshContractorDatabase,
 } from "@/data/contractorDatabase";
+import { getCompanyConfig } from "@/lib/companyConfig";
 
 interface StreamlinedPayrollProps {
 	onPayStatementGenerate: (data: PayStatementData) => void;
@@ -138,16 +139,17 @@ const StreamlinedPayroll: React.FC<StreamlinedPayrollProps> = ({
 
 		// summary already built above
 
+		const co = getCompanyConfig();
 		const payStatementData: PayStatementData = {
-			companyName: "ELEMENT CLEANING SYSTEMS LLC",
+			companyName: co.name,
 			companyAddress: {
-				street: "1400 112th Ave Se",
-				suite: "Suite 100",
-				city: "Bellevue",
-				state: "WA",
-				zipCode: "98004",
+				street: co.address.street,
+				suite: co.address.suite || "",
+				city: co.address.city,
+				state: co.address.state,
+				zipCode: co.address.zipCode,
 			},
-			companyPhone: "425-591-9427",
+			companyPhone: co.phone,
 			paidTo: {
 				name: selectedContractor.name,
 				address: {
