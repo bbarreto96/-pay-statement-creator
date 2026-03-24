@@ -143,9 +143,14 @@ const EmailAllModal: React.FC<EmailAllModalProps> = ({ open, onClose, periodLabe
       })));
 
       // Build filenames and server render items (and attachments only if not server rendering)
-      for (const r of results) {
-        if (r.status !== "fulfilled") continue;
-        const e = r.value.entry; const data = r.value.data;
+      for (let i = 0; i < results.length; i++) {
+        const r = results[i];
+        const e = visibleEntries[i];
+        if (r.status === "rejected") {
+          setStatuses((s) => ({ ...s, [e.id]: "Failed" }));
+          continue;
+        }
+        const data = r.value.data;
         const safeName = `${e.name} - ${periodLabel}`.replace(/[^A-Za-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
         const filename = `${safeName}.pdf`;
         serverRenderItemsLocal.push({ filename, preset: payStatementPreset || "bpv1", data });
@@ -188,7 +193,9 @@ const EmailAllModal: React.FC<EmailAllModalProps> = ({ open, onClose, periodLabe
         return next;
       });
     } catch (err) {
-      const raw = err instanceof Error ? err.message : String(err);
+      const raw = err instanceof Error
+        ? err.message
+        : (err as { message?: string })?.message || String(err);
       const friendly =
         /RESEND_API_KEY/i.test(raw) || /RESEND_FROM/i.test(raw)
           ? "Resend is not configured (missing RESEND_API_KEY or RESEND_FROM). Use macOS Mail or configure Resend."
@@ -198,15 +205,32 @@ const EmailAllModal: React.FC<EmailAllModalProps> = ({ open, onClose, periodLabe
           ? "Server could not launch headless Chrome. If running on Linux, install required dependencies."
           : raw;
       setError(friendly);
-      // Mark all selected as failed
+      // Only mark as failed those that weren't already Rendered/Sent/Draft
       setStatuses((s) => {
         const next = { ...s };
-        for (const e of visibleEntries) next[e.id] = "Failed";
+        for (const e of visibleEntries) {
+          if (next[e.id] !== "Rendered" && next[e.id] !== "Sent" && next[e.id] !== "Draft") {
+            next[e.id] = "Failed";
+          }
+        }
         return next;
       });
     } finally {
       setSending(false);
     }
+  };
+
+  const failedEntries = entries.filter(e => statuses[e.id] === "Failed");
+  const hasFailures = failedEntries.length > 0;
+
+  const retryFailed = () => {
+    // Uncheck all non-failed entries so only failed ones are retried
+    setStatuses((s) => {
+      const next = { ...s };
+      for (const e of entries) if (next[e.id] === "Failed") next[e.id] = "Pending";
+      return next;
+    });
+    void onSend();
   };
 
 
@@ -286,13 +310,31 @@ const EmailAllModal: React.FC<EmailAllModalProps> = ({ open, onClose, periodLabe
           ))}
         </div>
 
-        {error && <div className="mt-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded p-2">{error}</div>}
+        {error && (
+          <div className="mt-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded p-2">
+            {error}
+            {hasFailures && (
+              <div className="mt-1 text-xs text-red-600">
+                {failedEntries.length} contractor{failedEntries.length === 1 ? "" : "s"} failed: {failedEntries.map(e => e.name).join(", ")}
+              </div>
+            )}
+          </div>
+        )}
         {success && <div className="mt-3 text-sm text-emerald-800 bg-emerald-50 border border-emerald-200 rounded p-2">{success}</div>}
-        <div className="mt-4 flex items-center justify-end gap-2">
-          <button onClick={onClose} className="px-3 py-1.5 text-sm rounded-md border">Cancel</button>
-          <button onClick={onSend} disabled={!canSend || sending} className={`px-3 py-1.5 text-sm rounded-md text-white ${sending || !canSend ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"}`}>
-            {sending ? (useMacOSMail ? "Opening Mail..." : "Sending...") : (useMacOSMail ? "Create Draft" : "Send All via Email")}
-          </button>
+        <div className="mt-4 flex items-center justify-between gap-2">
+          <div>
+            {hasFailures && !sending && (
+              <button onClick={retryFailed} className="px-3 py-1.5 text-sm rounded-md border border-amber-300 text-amber-800 hover:bg-amber-50">
+                Retry {failedEntries.length} Failed
+              </button>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={onClose} className="px-3 py-1.5 text-sm rounded-md border">Cancel</button>
+            <button onClick={onSend} disabled={!canSend || sending} className={`px-3 py-1.5 text-sm rounded-md text-white ${sending || !canSend ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"}`}>
+              {sending ? (useMacOSMail ? "Opening Mail..." : "Sending...") : (useMacOSMail ? "Create Draft" : "Send All via Email")}
+            </button>
+          </div>
         </div>
         <div className="mt-2 text-xs text-gray-600">
           {useMacOSMail ? "macOS only: this will open Mail.app with a draft message and attachments." : "Requires server config: RESEND_API_KEY and RESEND_FROM."}

@@ -254,11 +254,15 @@ const HomeLayout: React.FC = () => {
 				// Attempt to auto-load saved statement for this contractor and current pay period
 				void (async () => {
 					try {
-						// Prefer autosaved draft if it exists for this pay period
-						const draft = loadDraft(c.id, payPeriodId || "");
-						if (draft) {
-							setPayStatementData(draft);
-							return;
+						// Only use local draft when NOT on Supabase — on Supabase always load fresh
+						// so both users see the same data without needing a page refresh.
+						const isSupabase = process.env.NEXT_PUBLIC_DATA_BACKEND === "supabase";
+						if (!isSupabase) {
+							const draft = loadDraft(c.id, payPeriodId || "");
+							if (draft) {
+								setPayStatementData(draft);
+								return;
+							}
 						}
 						const client = getPayStatementsClient();
 						const list = await client.listByContractorId(c.id);
@@ -553,11 +557,14 @@ const HomeLayout: React.FC = () => {
 			let cancelled = false;
 			void (async () => {
 				try {
-					// Prefer autosaved draft if it exists for this pay period
-					const draft = loadDraft(selectedContractor.id, payPeriodId || "");
-					if (draft) {
-						if (!cancelled) setPayStatementData(draft);
-						return;
+					// Skip local draft on Supabase — always load fresh so both users see the same data
+					const isSupabase = process.env.NEXT_PUBLIC_DATA_BACKEND === "supabase";
+					if (!isSupabase) {
+						const draft = loadDraft(selectedContractor.id, payPeriodId || "");
+						if (draft) {
+							if (!cancelled) setPayStatementData(draft);
+							return;
+						}
 					}
 					const client = getPayStatementsClient();
 					const list = await client.listByContractorId(selectedContractor.id);
@@ -712,12 +719,26 @@ const HomeLayout: React.FC = () => {
 					<div className="app-panel p-4 rise-in">
 						<div className="flex items-center justify-between mb-2">
 							<h3 className="section-title text-lg text-black">Contractors</h3>
-							<button
-								onClick={() => setShowContractorManager(true)}
-								className="btn-outline text-xs"
-							>
-								Manage
-							</button>
+							<div className="flex items-center gap-1">
+								<button
+									onClick={() => {
+										setContractorsLoading(true);
+										void fetchActiveContractors();
+										void sessionsStore.load(payPeriodId).then((map) => setSessionDone(map)).catch(() => {});
+										if (selectedContractor) openContractor(selectedContractor);
+									}}
+									className="btn-outline text-xs"
+									title="Reload data from server"
+								>
+									Refresh
+								</button>
+								<button
+									onClick={() => setShowContractorManager(true)}
+									className="btn-outline text-xs"
+								>
+									Manage
+								</button>
+							</div>
 						</div>
 						{contractorsLoading ? (
 							<div className="py-6 text-center text-sm text-gray-500">Loading contractors…</div>
@@ -874,9 +895,18 @@ const HomeLayout: React.FC = () => {
 							{!showPreview ? (
 								<div className="app-panel p-5 rise-in">
 									<div className="flex items-center justify-between mb-3">
-										<h2 className="section-title text-2xl text-black">
-											{selectedContractor.name}
-										</h2>
+										<div className="flex items-center gap-3">
+											<h2 className="section-title text-2xl text-black">
+												{selectedContractor.name}
+											</h2>
+											<a
+												href={`/contractors/${selectedContractor.id}/statements`}
+												className="text-xs text-blue-600 hover:underline"
+												title="View full pay history for this contractor"
+											>
+												History →
+											</a>
+										</div>
 										<div className="flex gap-2">
 											{payStatementData && (<>
 												<button
