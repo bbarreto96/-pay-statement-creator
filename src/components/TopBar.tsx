@@ -92,31 +92,20 @@ const TopBar: React.FC<TopBarProps> = ({
 					</div>
 				</div>
 
-				{/* Right: Dashboard / Settings / Help */}
-				<nav className="flex items-center gap-3 text-sm">
+				{/* Right: Status / Settings / Log out */}
+				<nav className="flex items-center gap-2 text-sm">
 					<SupabaseStatusBadge />
-					<Link href="/dashboard" className="btn-ghost">
-						Dashboard
-					</Link>
-					<Link href="/settings" className="btn-ghost">
+					<Link href="/settings" className="btn-ghost text-sm">
 						Settings
 					</Link>
 					<button
 						type="button"
-						className="btn-ghost"
+						className="btn-ghost text-sm"
 						onClick={onLogout}
 						disabled={isLoggingOut}
 					>
-						{isLoggingOut ? "Logging out..." : "Log out"}
+						{isLoggingOut ? "Logging out…" : "Log out"}
 					</button>
-					<a
-						href="https://github.com"
-						target="_blank"
-						rel="noreferrer"
-						className="btn-ghost"
-					>
-						Help
-					</a>
 				</nav>
 			</div>
 		</header>

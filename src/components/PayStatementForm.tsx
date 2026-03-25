@@ -10,6 +10,7 @@ import {
 import {
 	getAvailablePayPeriods,
 	getDefaultPayPeriod,
+	getPayPeriodById,
 	PayPeriod,
 } from "../utils/payPeriods";
 import { getCompanyConfig } from "@/lib/companyConfig";
@@ -319,34 +320,34 @@ const PayStatementForm: React.FC<PayStatementFormProps> = ({
 				</div>
 			)}
 
-			{/* Paid To Information */}
-			<div className="mb-6">
-				<h3 className="text-lg font-semibold mb-4 text-gray-700">Paid To</h3>
-				<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-					<div>
-						<label className="block text-sm font-medium text-gray-700 mb-1">
-							Name
-						</label>
-						<input
-							type="text"
-							value={formData.paidTo.name}
-							onChange={(e) =>
-								updateFormData({
-									paidTo: { ...formData.paidTo, name: e.target.value },
-								})
-							}
-							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-							style={{ color: "#000000" }}
-						/>
+{!hideCompanyInfo && (
+				<div className="mb-6">
+					<h3 className="text-lg font-semibold mb-4 text-gray-700">Paid To</h3>
+					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+						<div>
+							<label className="block text-sm font-medium text-gray-700 mb-1">
+								Name
+							</label>
+							<input
+								type="text"
+								value={formData.paidTo.name}
+								onChange={(e) =>
+									updateFormData({
+										paidTo: { ...formData.paidTo, name: e.target.value },
+									})
+								}
+								className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+								style={{ color: "#000000" }}
+							/>
+						</div>
 					</div>
 				</div>
-			</div>
-
-			{/* Payment Information */}
-			<div className="mb-6">
-				<h3 className="text-lg font-semibold mb-4 text-gray-700">
-					Payment Information
-				</h3>
+)}
+{!hideCompanyInfo && (
+				<div className="mb-6">
+					<h3 className="text-lg font-semibold mb-4 text-gray-700">
+						Payment Information
+					</h3>
 				<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 					<div>
 						<label className="block text-sm font-medium text-gray-700 mb-1">
@@ -393,6 +394,7 @@ const PayStatementForm: React.FC<PayStatementFormProps> = ({
 				</div>
 			</div>
 
+)}
 			{/* Payment Details */}
 			<div className="mb-6">
 				<div className="flex justify-between items-center mb-4">
@@ -565,6 +567,7 @@ const PayStatementForm: React.FC<PayStatementFormProps> = ({
 				</div>
 			</div>
 
+{!hideCompanyInfo && (
 			<div className="mb-6">
 				<div className="flex justify-between items-center mb-4">
 					<h3 className="section-title text-lg text-gray-700">Summary</h3>
@@ -615,6 +618,7 @@ const PayStatementForm: React.FC<PayStatementFormProps> = ({
 				))}
 			</div>
 
+)}
 			{/* Notes Section */}
 			<div className="mb-6">
 				<h3 className="section-title text-lg mb-4 text-gray-700">Notes</h3>

@@ -39,6 +39,7 @@ const HomeLayout: React.FC = () => {
 		}>({ status: "idle" });
 
 	const [showContractorManager, setShowContractorManager] = useState(false);
+	const [contractorFilter, setContractorFilter] = useState("");
 	const defaultPeriod = getDefaultPayPeriod();
 
 	const [payPeriodId, setPayPeriodId] = usePayPeriod();
@@ -713,12 +714,16 @@ const HomeLayout: React.FC = () => {
 					/>
 				</div>
 
-				<div className="grid grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)_400px] gap-5">
-				{/* Left rail: Contractor selection */}
-				<aside>
-					<div className="app-panel p-4 rise-in">
-						<div className="flex items-center justify-between mb-2">
-							<h3 className="section-title text-lg text-black">Contractors</h3>
+				<div className="grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)_360px] gap-5">
+				{/* Left rail: Contractor checklist */}
+				<aside className="lg:sticky lg:top-[78px] lg:self-start">
+					<div className="app-panel p-3 rise-in flex flex-col" style={{ maxHeight: "calc(100vh - 100px)" }}>
+						{/* Header */}
+						<div className="flex items-center justify-between mb-2 shrink-0">
+							<div>
+								<h3 className="section-title text-base text-black leading-tight">Contractors</h3>
+								<p className="text-xs text-gray-500">{completed}/{activeContractors.length} done</p>
+							</div>
 							<div className="flex items-center gap-1">
 								<button
 									onClick={() => {
@@ -727,27 +732,76 @@ const HomeLayout: React.FC = () => {
 										void sessionsStore.load(payPeriodId).then((map) => setSessionDone(map)).catch(() => {});
 										if (selectedContractor) openContractor(selectedContractor);
 									}}
-									className="btn-outline text-xs"
+									className="btn-ghost text-xs py-1 px-2"
 									title="Reload data from server"
 								>
-									Refresh
+									↻
 								</button>
 								<button
 									onClick={() => setShowContractorManager(true)}
-									className="btn-outline text-xs"
+									className="btn-ghost text-xs py-1 px-2"
 								>
 									Manage
 								</button>
 							</div>
 						</div>
+						{/* Filter */}
+						<input
+							type="text"
+							placeholder="Filter contractors…"
+							value={contractorFilter}
+							onChange={(e) => setContractorFilter(e.target.value)}
+							className="input-field text-sm mb-2 shrink-0"
+						/>
+						{/* Progress bar */}
+						<div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden mb-2 shrink-0">
+							<div className="h-full bg-emerald-500 transition-all duration-500" style={{ width: `${percentComplete}%` }} />
+						</div>
+						{/* Contractor list */}
 						{contractorsLoading ? (
 							<div className="py-6 text-center text-sm text-gray-500">Loading contractors…</div>
 						) : (
-							<ContractorSelector
-								selectedContractor={selectedContractor || undefined}
-								contractors={activeContractors}
-								onContractorSelect={openContractor}
-							/>
+							<div className="flex-1 overflow-y-auto -mx-1 px-1 space-y-0.5 min-h-0">
+								{activeContractors
+									.filter((c) => !contractorFilter || c.name.toLowerCase().includes(contractorFilter.toLowerCase()))
+									.map((c) => {
+										const done = !!sessionDone[c.id];
+										const isSelected = selectedContractor?.id === c.id;
+										const amt = sessionDone[c.id]?.amount || 0;
+										return (
+											<div
+												key={c.id}
+												className={`flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer transition-colors select-none ${
+													isSelected
+														? "bg-blue-50 border-l-2 border-blue-500"
+														: done
+														? "hover:bg-emerald-100"
+														: "hover:bg-gray-50"
+												}`}
+												onClick={() => openContractor(c)}
+											>
+												<input
+													type="checkbox"
+													checked={done}
+													onChange={(e) => { e.stopPropagation(); toggleDone(c.id); }}
+													onClick={(e) => e.stopPropagation()}
+													className="h-3.5 w-3.5 accent-emerald-600 shrink-0 cursor-pointer"
+													aria-label={`Mark ${c.name} done`}
+												/>
+												<span className={`flex-1 text-sm truncate ${done ? "text-gray-400 line-through" : isSelected ? "text-gray-900 font-medium" : "text-gray-800"}`}>
+													{c.name}
+												</span>
+												{done && amt > 0 && (
+													<span className="text-xs text-emerald-700 tabular-nums shrink-0">{formatUSD(amt)}</span>
+												)}
+											</div>
+										);
+									})}
+								{activeContractors.length > 0 &&
+									activeContractors.filter((c) => !contractorFilter || c.name.toLowerCase().includes(contractorFilter.toLowerCase())).length === 0 && (
+									<p className="text-xs text-gray-400 text-center py-4">No matches</p>
+								)}
+							</div>
 						)}
 							{/* Email modal for sending all PDFs */}
 							{emailModalOpen && (
@@ -978,50 +1032,52 @@ const HomeLayout: React.FC = () => {
 							<h3 className="section-title text-lg text-gray-900">Quick Actions</h3>
 							<p className="text-xs text-gray-500">Save, mark done, and hop to the next contractor.</p>
 						</div>
-						<div className="flex flex-wrap gap-2">
+						<button
+							onClick={() => saveStatement({ markDone: true, goNext: true })}
+							disabled={!payStatementData || saveState.status === "saving"}
+							className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
+						>
+							{saveState.status === "saving" ? "Saving…" : "✓ Save & Next →"}
+						</button>
+						<div className="flex gap-2 mt-1">
 							<button
 								onClick={() => saveStatement()}
 								disabled={!payStatementData || saveState.status === "saving"}
-								className="btn-outline text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+								className="btn-ghost text-sm flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
 							>
-								{saveState.status === "saving" ? "Saving…" : "Save"}
-							</button>
-							<button
-								onClick={() => saveStatement({ markDone: true, goNext: true })}
-								disabled={!payStatementData || saveState.status === "saving"}
-								className="btn-outline text-xs disabled:opacity-50 disabled:cursor-not-allowed"
-							>
-								Save + Next
+								Save
 							</button>
 							<button
 								onClick={markCurrentAsDone}
 								disabled={!payStatementData}
-								className="btn-outline text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+								className="btn-ghost text-sm flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
 							>
 								Mark Done
 							</button>
+						</div>
+						<div className="flex gap-2 mt-1">
 							<button
 								onClick={goPrev}
 								disabled={selectedIndex <= 0}
-								className="btn-outline text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+								className="btn-ghost text-sm flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
 							>
-								Prev
+								← Prev
 							</button>
 							<button
 								onClick={goNext}
 								disabled={selectedIndex < 0 || selectedIndex >= activeContractors.length - 1}
-								className="btn-outline text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+								className="btn-ghost text-sm flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
 							>
-								Next
-							</button>
-							<button
-								onClick={() => setShowPreview(true)}
-								disabled={!payStatementData}
-								className="btn-outline text-xs disabled:opacity-50 disabled:cursor-not-allowed"
-							>
-								Open PDF
+								Next →
 							</button>
 						</div>
+						<button
+							onClick={() => setShowPreview(true)}
+							disabled={!payStatementData}
+							className="btn-ghost text-sm w-full mt-1 disabled:opacity-50 disabled:cursor-not-allowed"
+						>
+							Open PDF Preview
+						</button>
 						{saveState.message && (
 							<div
 								className={`text-xs px-2 py-1 rounded-md ${
