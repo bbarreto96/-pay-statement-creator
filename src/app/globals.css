@@ -1,17 +1,20 @@
 @import "tailwindcss";
 
 :root {
-	--background: #ffffff;
-	--foreground: #1f2a2e;
-	--ink: #1f2a2e;
-	--ink-soft: #3e4b50;
+	--background: #f4f3f1;
+	--foreground: #111111;
+	--ink: #111111;
+	--ink-soft: #555555;
 	--paper: #ffffff;
-	--paper-soft: #ffffff;
-	--accent: #4fa3ff;
-	--accent-strong: #2f80ed;
-	--teal: #26a98e;
-	--teal-strong: #1b826e;
-	--shadow: 0 6px 14px rgba(31, 42, 46, 0.06);
+	--paper-soft: #fafafa;
+	--border: #e2e2e2;
+	--border-strong: #c8c8c8;
+	--accent: #111111;
+	--accent-hover: #333333;
+	--shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.07), 0 1px 2px rgba(0, 0, 0, 0.04);
+	--shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.05);
+	--teal: #1a9e84;
+	--teal-strong: #147a66;
 }
 
 @theme inline {
@@ -26,9 +29,8 @@
 
 @media (prefers-color-scheme: dark) {
 	:root {
-		/* Force high contrast in dark mode as well */
-		--background: #ffffff;
-		--foreground: #000000;
+		--background: #f4f3f1;
+		--foreground: #111111;
 	}
 }
 
@@ -38,69 +40,122 @@ body {
 	font-family: var(--font-body), sans-serif;
 }
 
+/* ─── Shell ─────────────────────────────────────────────────── */
+
 .app-shell {
 	min-height: 100vh;
 	color: var(--ink);
 }
 
+/* ─── Topbar ─────────────────────────────────────────────────── */
+
 .app-topbar {
-	background: #ffffff;
-	border-bottom: 2px solid #1e1e1e;
-	box-shadow: none;
+	background: #0d0d0d;
+	border-bottom: none;
+	box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06);
 }
+
+/* Topbar text/links need to be white */
+.app-topbar .section-title,
+.app-topbar span,
+.app-topbar label {
+	color: #e8e8e8;
+}
+
+.app-topbar .btn-ghost {
+	color: #e0e0e0;
+	border-color: rgba(255, 255, 255, 0.15);
+	background: transparent;
+}
+
+.app-topbar .btn-ghost:hover {
+	background: rgba(255, 255, 255, 0.1);
+	border-color: rgba(255, 255, 255, 0.3);
+	transform: none;
+}
+
+.app-topbar .input-field {
+	background: rgba(255, 255, 255, 0.08);
+	border-color: rgba(255, 255, 255, 0.18);
+	color: #ffffff;
+}
+
+.app-topbar .input-field option {
+	background: #1a1a1a;
+	color: #ffffff;
+}
+
+/* ─── Panels ─────────────────────────────────────────────────── */
 
 .app-panel {
 	background: var(--paper);
-	border: 2px solid #1e1e1e;
-	border-radius: 8px;
-	box-shadow: none;
+	border: 1px solid var(--border);
+	border-radius: 10px;
+	box-shadow: var(--shadow-sm);
 }
 
 .app-panel.soft {
-	background: #ffffff;
-	border-color: #dcdcdc;
+	background: var(--paper);
+	border-color: var(--border);
 	border-width: 1px;
+	box-shadow: none;
 }
+
+/* ─── Typography ─────────────────────────────────────────────── */
 
 .section-title {
 	font-family: var(--font-display), serif;
 	letter-spacing: -0.02em;
+	color: var(--ink);
 }
+
+/* ─── Inputs ─────────────────────────────────────────────────── */
 
 .input-field {
 	width: 100%;
-	border-radius: 6px;
-	border: 1px solid #dcdcdc;
+	border-radius: 7px;
+	border: 1px solid var(--border-strong);
 	background: #fff;
 	padding: 8px 10px;
 	color: var(--ink);
 	box-shadow: none;
+	transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .input-field:focus {
 	outline: none;
-	border-color: var(--accent);
-	box-shadow: 0 0 0 2px rgba(79, 163, 255, 0.15);
+	border-color: #888;
+	box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.07);
 }
+
+/* ─── Buttons ─────────────────────────────────────────────────── */
 
 .btn-primary {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
 	gap: 8px;
-	border-radius: 999px;
-	padding: 8px 16px;
-	font-weight: 600;
-	color: white;
-	background: var(--accent);
-	border: 1px solid var(--accent);
-	box-shadow: none;
-	transition: transform 0.15s ease, background 0.15s ease;
+	border-radius: 8px;
+	padding: 10px 18px;
+	font-weight: 700;
+	font-size: 0.9rem;
+	letter-spacing: 0.01em;
+	color: #ffffff;
+	background: #111111;
+	border: 1px solid #111111;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+	transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
 }
 
-.btn-primary:hover {
+.btn-primary:hover:not(:disabled) {
+	background: #2a2a2a;
+	box-shadow: 0 3px 8px rgba(0, 0, 0, 0.18);
 	transform: translateY(-1px);
-	background: var(--accent-strong);
+}
+
+.btn-primary:active:not(:disabled) {
+	transform: translateY(0);
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
 }
 
 .btn-secondary {
@@ -108,37 +163,38 @@ body {
 	align-items: center;
 	justify-content: center;
 	gap: 8px;
-	border-radius: 999px;
+	border-radius: 8px;
 	padding: 8px 16px;
 	font-weight: 600;
-	color: var(--accent);
+	color: var(--ink);
 	background: #ffffff;
-	border: 1px solid var(--accent);
-	transition: transform 0.15s ease, background 0.15s ease;
+	border: 1px solid var(--border-strong);
+	transition: background 0.15s ease, border-color 0.15s ease;
 }
 
 .btn-secondary:hover {
-	transform: translateY(-1px);
-	background: rgba(79, 163, 255, 0.08);
+	background: #f5f5f5;
+	border-color: #aaa;
 }
 
 .btn-ghost {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	gap: 8px;
-	border-radius: 8px;
+	gap: 6px;
+	border-radius: 7px;
 	padding: 6px 12px;
-	font-weight: 600;
-	color: var(--ink);
+	font-weight: 500;
+	color: #444;
 	background: transparent;
-	border: 1px solid #dcdcdc;
-	transition: transform 0.15s ease, background 0.15s ease;
+	border: 1px solid var(--border);
+	transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
 }
 
-.btn-ghost:hover {
-	transform: translateY(-1px);
-	background: rgba(79, 163, 255, 0.06);
+.btn-ghost:hover:not(:disabled) {
+	background: #f0f0f0;
+	color: #111;
+	border-color: #bbb;
 }
 
 .btn-dark {
@@ -146,32 +202,41 @@ body {
 	align-items: center;
 	justify-content: center;
 	gap: 8px;
-	border-radius: 999px;
+	border-radius: 8px;
 	padding: 10px 18px;
 	font-weight: 600;
 	color: white;
-	background: #1f2a2e;
-	transition: transform 0.15s ease, background 0.15s ease;
+	background: #111111;
+	border: 1px solid #111111;
+	transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.btn-dark:hover {
+	background: #2a2a2a;
+	transform: translateY(-1px);
 }
 
 .btn-outline {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	gap: 8px;
-	border-radius: 999px;
-	padding: 6px 12px;
-	font-weight: 600;
-	color: var(--accent);
+	gap: 6px;
+	border-radius: 7px;
+	padding: 6px 14px;
+	font-weight: 500;
+	color: #333;
 	background: transparent;
-	border: 2px solid var(--accent);
-	transition: transform 0.15s ease, background 0.15s ease;
+	border: 1.5px solid #c8c8c8;
+	transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
 }
 
-.btn-outline:hover {
-	transform: translateY(-1px);
-	background: rgba(79, 163, 255, 0.08);
+.btn-outline:hover:not(:disabled) {
+	background: #f2f2f2;
+	border-color: #999;
+	color: #111;
 }
+
+/* ─── Tables ─────────────────────────────────────────────────── */
 
 .summary-table {
 	border-collapse: collapse;
@@ -181,17 +246,20 @@ body {
 
 .summary-table th,
 .summary-table td {
-	border: 1px solid #dcdcdc;
+	border: 1px solid #ebebeb;
 	padding: 8px 10px;
 }
 
 .summary-table thead {
-	background: #f7f7f7;
-	color: #4b4b4b;
+	background: #f8f8f8;
+	color: #555;
+	font-size: 11px;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
 }
 
 .summary-table tbody tr:hover {
-	background: #f9fbff;
+	background: #fafafa;
 }
 
 .table-resize {
@@ -203,19 +271,16 @@ body {
 	min-height: 240px;
 }
 
-.btn-dark:hover {
-	transform: translateY(-1px);
-	background: #11181b;
-}
+/* ─── Animations ─────────────────────────────────────────────── */
 
 .rise-in {
-	animation: riseIn 0.45s ease both;
+	animation: riseIn 0.3s ease both;
 }
 
 @keyframes riseIn {
 	from {
 		opacity: 0;
-		transform: translateY(12px);
+		transform: translateY(8px);
 	}
 	to {
 		opacity: 1;
@@ -223,7 +288,8 @@ body {
 	}
 }
 
-/* Print styles for better PDF generation */
+/* ─── Print ──────────────────────────────────────────────────── */
+
 @media print {
 	body {
 		background: white !important;
@@ -238,7 +304,6 @@ body {
 		box-shadow: none !important;
 	}
 
-	/* Ensure proper page breaks */
 	.page-break-before {
 		page-break-before: always;
 	}
@@ -252,20 +317,22 @@ body {
 	}
 }
 
-/* Custom scrollbar for better UX */
+/* ─── Scrollbar ──────────────────────────────────────────────── */
+
 ::-webkit-scrollbar {
-	width: 8px;
+	width: 6px;
+	height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-	background: #f1f1f1;
+	background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-	background: #c1c1c1;
-	border-radius: 4px;
+	background: #d0d0d0;
+	border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-	background: #a8a8a8;
+	background: #aaa;
 }

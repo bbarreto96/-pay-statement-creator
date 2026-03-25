@@ -717,7 +717,7 @@ const HomeLayout: React.FC = () => {
 				<div className="grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)_360px] gap-5">
 				{/* Left rail: Contractor checklist */}
 				<aside className="lg:sticky lg:top-[78px] lg:self-start">
-					<div className="app-panel p-3 rise-in flex flex-col" style={{ maxHeight: "calc(100vh - 100px)" }}>
+					<div className="app-panel p-3 rise-in flex flex-col" style={{ maxHeight: "calc(100vh - 100px)", background: "#fafafa" }}>
 						{/* Header */}
 						<div className="flex items-center justify-between mb-2 shrink-0">
 							<div>

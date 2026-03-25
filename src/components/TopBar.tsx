@@ -49,26 +49,24 @@ const TopBar: React.FC<TopBarProps> = ({
 	return (
 		<header className="sticky top-0 z-30 w-full app-topbar">
 			<div className="max-w-[1600px] mx-auto px-5 h-[70px] flex items-center justify-between gap-4">
-				{/* Left: Logo/Name + Home */}
+				{/* Left: Logo/Home */}
 				<div className="flex items-center gap-3">
 					<button
 						type="button"
 						onClick={() => (onHomeClick ? onHomeClick() : router.push("/"))}
-						className="btn-ghost"
+						className="flex items-center gap-2 text-white/90 hover:text-white transition-colors"
 						aria-label="Go to Home"
 						title="Go to Home"
 					>
-						🏠 Home
+						<span className="text-lg">🏠</span>
+						<span className="section-title text-base text-white hidden sm:inline">Pay Statement Studio</span>
 					</button>
-					<div className="text-sm text-black hidden sm:flex items-center gap-2">
-						<span className="section-title text-base">Pay Statement Studio</span>
-					</div>
 				</div>
 
 				{/* Center: Pay Period Selector */}
 				<div className="flex-1 flex justify-center">
 					<div className="flex items-center gap-2">
-						<label htmlFor="pay-period" className="text-sm text-gray-700">
+						<label htmlFor="pay-period" className="text-sm text-white/60 hidden sm:inline">
 							Pay Period
 						</label>
 						{!mounted ? (
@@ -95,12 +93,12 @@ const TopBar: React.FC<TopBarProps> = ({
 				{/* Right: Status / Settings / Log out */}
 				<nav className="flex items-center gap-2 text-sm">
 					<SupabaseStatusBadge />
-					<Link href="/settings" className="btn-ghost text-sm">
+					<Link href="/settings" className="text-white/70 hover:text-white transition-colors px-3 py-1.5 rounded-md hover:bg-white/10 font-medium">
 						Settings
 					</Link>
 					<button
 						type="button"
-						className="btn-ghost text-sm"
+						className="text-white/70 hover:text-white transition-colors px-3 py-1.5 rounded-md hover:bg-white/10 font-medium"
 						onClick={onLogout}
 						disabled={isLoggingOut}
 					>
